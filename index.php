@@ -299,6 +299,15 @@
                 <i data-lucide="clipboard-list"></i>
                 <p>No hay gastos registrados este mes.</p>
             </div>
+            <div id="tablePagination" class="table-pagination" style="display:none;">
+                <button type="button" onclick="changePage(-1)" id="btnPagPrev" class="btn-icon-only" aria-label="Página anterior">
+                    <i data-lucide="chevron-left"></i>
+                </button>
+                <span id="pagInfo" class="pag-info">Página 1 de 1</span>
+                <button type="button" onclick="changePage(1)" id="btnPagNext" class="btn-icon-only" aria-label="Página siguiente">
+                    <i data-lucide="chevron-right"></i>
+                </button>
+            </div>
         </div>
     </div>
 

@@ -41,7 +41,11 @@ let deleteTimeout = null;
 
 // Estado de ordenamiento de tabla
 let tableSortCol = 'descripcion'; // columna activa
-let tableSortDir = 1;             // 1 = asc, -1 = desc 
+let tableSortDir = 1;             // 1 = asc, -1 = desc
+
+// Estado de paginación de la tabla de movimientos
+const PAGE_SIZE = 15;
+let currentPage = 1;
 
 // FIX #5: Flag para evitar doble inicialización de Google Login
 let googleInitialized = false;
@@ -287,6 +291,7 @@ function navigateMonth(direction) {
     else if (newMonth > 12) { newMonth = 1; newYear += 1; }
     currentMonth = newMonth;
     currentYear = newYear;
+    currentPage = 1;
     // Velocidad: si tenemos caché, cargar el mes directo sin GET al servidor
     if (cachedAllData) {
         loadMonthFromCache();
@@ -795,6 +800,7 @@ function renderTable() {
 
     if (!hayGastosVisibles) {
         document.getElementById('emptyState').style.display = 'block';
+        document.getElementById('tablePagination').style.display = 'none';
         return;
     }
     document.getElementById('emptyState').style.display = 'none';
@@ -820,7 +826,14 @@ function renderTable() {
         }
     });
 
-    gastosAMostrar.forEach((g) => {
+    // Paginación: se corta la lista ya ordenada para no renderizar cientos de filas a la vez
+    const totalPages = Math.max(1, Math.ceil(gastosAMostrar.length / PAGE_SIZE));
+    if (currentPage > totalPages) currentPage = totalPages;
+    if (currentPage < 1) currentPage = 1;
+    const startIdx = (currentPage - 1) * PAGE_SIZE;
+    const gastosPagina = gastosAMostrar.slice(startIdx, startIdx + PAGE_SIZE);
+
+    gastosPagina.forEach((g) => {
         const tr = document.createElement('tr');
         const isRecurrenteItem = g.esRecurrente || g.idRecurrencia;
         const recurrenteIcon = isRecurrenteItem ? `<i data-lucide="repeat" style="width:14px; margin-left:5px; color:var(--primary);"></i>` : '';
@@ -842,7 +855,29 @@ function renderTable() {
         tbody.appendChild(tr);
     });
 
+    updatePaginationControls(totalPages);
+
     if (typeof lucide !== 'undefined') lucide.createIcons();
+}
+
+function updatePaginationControls(totalPages) {
+    const pagContainer = document.getElementById('tablePagination');
+    if (!pagContainer) return;
+
+    if (totalPages <= 1) {
+        pagContainer.style.display = 'none';
+        return;
+    }
+
+    pagContainer.style.display = 'flex';
+    document.getElementById('pagInfo').textContent = `Página ${currentPage} de ${totalPages}`;
+    document.getElementById('btnPagPrev').disabled = currentPage <= 1;
+    document.getElementById('btnPagNext').disabled = currentPage >= totalPages;
+}
+
+function changePage(direction) {
+    currentPage += direction;
+    renderTable();
 }
 
 // Modal central de acciones (reemplaza al dropdown)
@@ -904,6 +939,7 @@ function sortTable(col) {
         tableSortCol = col;
         tableSortDir = 1;
     }
+    currentPage = 1;
     renderTable();
     // Actualizar indicadores visuales en los th
     document.querySelectorAll('.modern-table th[data-sort]').forEach(th => {
