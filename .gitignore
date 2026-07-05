@@ -1,0 +1,5 @@
+# Credenciales reales (usar config.example.php como plantilla)
+config.php
+
+# Configuración local del editor/CLI, no forma parte del proyecto
+.claude/
