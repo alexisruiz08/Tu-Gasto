@@ -615,4 +615,14 @@ input:not([type='checkbox'])::placeholder { color: #475569; }
 .historial-mes-barra { width: 100%; max-width: 28px; border-radius: 4px 4px 0 0; background: var(--secondary); min-height: 2px; }
 .historial-mes-barra.negativo { background: var(--danger); }
 .historial-mes-label { font-size: 0.65rem; color: var(--text-muted); white-space: nowrap; }
-}
+
+/* --- PÁGINAS LEGALES (terminos.php / privacidad.php) --- */
+.legal-content h3 { margin-top: 22px; margin-bottom: 8px; font-size: 1.05rem; color: var(--text-main); }
+.legal-content h3:first-child { margin-top: 0; }
+.legal-content p { color: var(--text-muted); line-height: 1.6; margin-bottom: 4px; }
+.legal-content a { color: var(--primary); }
+
+/* --- FOOTER --- */
+.app-footer { text-align: center; padding: 20px 0 10px; font-size: 0.8rem; color: var(--text-muted); }
+.app-footer a { color: var(--text-muted); text-decoration: underline; margin: 0 6px; }
+.app-footer a:hover { color: var(--text-main); }

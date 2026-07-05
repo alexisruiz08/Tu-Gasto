@@ -545,8 +545,12 @@
         </div>
     </div>
 
+    <footer class="app-footer">
+        <a href="/terminos.php">Términos de Servicio</a> · <a href="/privacidad.php">Política de Privacidad</a>
+    </footer>
+
     <div id="notification-container" class="notification-container"></div>
-    
+
     <script src="script.js?v=<?php echo filemtime('script.js'); ?>"></script>
 
 </body>
