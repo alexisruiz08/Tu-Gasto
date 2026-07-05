@@ -131,40 +131,67 @@
             </h1>
 
             <p class="landing-subtitle">
-                TuGasto.com evoluciona. Administra tus finanzas personales en Pesos, Dólares o Criptomonedas con tipos de cambio reales.
+                Registrá tus gastos e ingresos, armá presupuestos por categoría y mirá reportes claros de en qué se te va la plata. Todo gratis, desde el celular o la PC, sin instalar nada — en pesos, dólares o criptomonedas.
             </p>
-            
+
             <button class="btn-primary btn-cta" onclick="showAuthOnly()">
                 Comenzar Gratis
             </button>
-            
-            <h3 class="landing-features-title">Por qué usar <span style="color:#3b82f6">TuGasto.com</span></h3>
+
+            <h3 class="landing-features-title">Todo lo que podés hacer con <span style="color:#3b82f6">TuGasto.com</span></h3>
             <ul class="feature-list">
                 <li>
                     <span class="feature-icon">
-                        <i data-lucide="wallet"></i> 
+                        <i data-lucide="wallet"></i>
                     </span>
                     <div class="feature-text">
-                        <strong>Balance Real</strong> 
-                        <span>Conoce tu dinero disponible después de gastos fijos.</span>
+                        <strong>Balance Real al Día</strong>
+                        <span>Cargá tus ingresos y gastos del mes y sabé al instante cuánta plata te queda disponible.</span>
                     </div>
                 </li>
                 <li>
                     <span class="feature-icon">
-                        <i data-lucide="repeat"></i> 
+                        <i data-lucide="repeat"></i>
                     </span>
                     <div class="feature-text">
-                        <strong>Recurrencia Automática</strong> 
-                        <span>Olvídate de registrar el alquiler o la luz cada mes.</span>
+                        <strong>Gastos Recurrentes Automáticos</strong>
+                        <span>Cargá una vez el alquiler, la luz o una suscripción y se repite solo todos los meses.</span>
                     </div>
                 </li>
                 <li>
                     <span class="feature-icon">
-                        <i data-lucide="pie-chart"></i> 
+                        <i data-lucide="target"></i>
                     </span>
                     <div class="feature-text">
-                        <strong>Billetera Multimoneda</strong> 
-                        <span>Guarda en Cripto o Dólares y ve el total en tu moneda local.</span>
+                        <strong>Presupuestos por Categoría</strong>
+                        <span>Definí un límite mensual para Comida, Transporte, Ocio y más, y recibí un aviso si te pasás.</span>
+                    </div>
+                </li>
+                <li>
+                    <span class="feature-icon">
+                        <i data-lucide="bar-chart-3"></i>
+                    </span>
+                    <div class="feature-text">
+                        <strong>Reportes y Comparativa Mensual</strong>
+                        <span>Mirá cuánto gastás por categoría y cómo evolucionó tu balance en los últimos meses.</span>
+                    </div>
+                </li>
+                <li>
+                    <span class="feature-icon">
+                        <i data-lucide="pie-chart"></i>
+                    </span>
+                    <div class="feature-text">
+                        <strong>Billetera Multimoneda</strong>
+                        <span>Guardá ahorros en pesos, dólares, euros u otras monedas, y en criptomonedas como Bitcoin o Ethereum. Vas a ver el total convertido a tu moneda de referencia.</span>
+                    </div>
+                </li>
+                <li>
+                    <span class="feature-icon">
+                        <i data-lucide="download"></i>
+                    </span>
+                    <div class="feature-text">
+                        <strong>Buscador y Exportación a CSV</strong>
+                        <span>Encontrá cualquier movimiento por descripción o categoría, y exportá tus gastos a Excel cuando los necesites.</span>
                     </div>
                 </li>
             </ul>
