@@ -15,7 +15,8 @@ let currentData = {
     monedaBase: 'ars',
     monedaVisual: 'usd',
     sheetUrl: '',
-    billetera: {}
+    billetera: {},
+    presupuestos: {}
 };
 
 // FIX #1: Caché de todos los datos del usuario para evitar doble GET en saveData
@@ -41,7 +42,17 @@ let deleteTimeout = null;
 
 // Estado de ordenamiento de tabla
 let tableSortCol = 'descripcion'; // columna activa
-let tableSortDir = 1;             // 1 = asc, -1 = desc 
+let tableSortDir = 1;             // 1 = asc, -1 = desc
+
+// Estado del buscador/filtro de la tabla de Movimientos
+let tableFilterText = '';
+let tableFilterCategoria = '';
+
+// Categorías cuyo presupuesto ya avisamos que se superó en esta sesión (evita spam de notificaciones)
+let presupuestosAvisados = new Set();
+
+// Evita mostrar el recordatorio de recurrentes pendientes más de una vez por carga de mes
+let recordatorioMostradoParaMes = null;
 
 // FIX #5: Flag para evitar doble inicialización de Google Login
 let googleInitialized = false;
@@ -187,6 +198,7 @@ async function checkSession() {
             currentData.monedaVisual = allUserData.global?.monedaVisual || 'usd';
             currentData.sheetUrl = allUserData.global?.sheetUrl || '';
             currentData.billetera = allUserData.global?.billetera || {};
+            currentData.presupuestos = allUserData.global?.presupuestos || {};
 
             document.getElementById('landingLayout').style.display = 'none';
             document.getElementById('mainContent').style.display = 'block';
@@ -207,6 +219,7 @@ function initApp() {
     loadData().then(() => {
         fetchSheetRates();
         showNotification(`Bienvenido, ${currentUser} 👋`);
+        checkRecordatorioRecurrentes();
     });
 }
 
@@ -309,6 +322,7 @@ function loadMonthFromCache() {
     updateUIConfig();
     updateDashboard();
     renderTable();
+    checkRecordatorioRecurrentes();
 }
 
 // --- GESTIÓN DE DATOS ---
@@ -353,6 +367,7 @@ async function loadData() {
             currentData.monedaVisual = allUserData.global?.monedaVisual || 'usd'; 
             currentData.sheetUrl = allUserData.global?.sheetUrl || '';
             currentData.billetera = allUserData.global?.billetera || {};
+            currentData.presupuestos = allUserData.global?.presupuestos || {};
 
             const monthKey = `${currentYear}-${String(currentMonth).padStart(2, '0')}`;
             let monthData = allUserData[monthKey] || { ingresos: { fijo: 0, extra: 0 }, gastos: [] };
@@ -404,13 +419,14 @@ async function loadData() {
             currentData.gastos = monthData.gastos;
             
         } else {
-            currentData = { ingresos: { fijo: 0, extra: 0 }, gastos: [], monedaBase: 'ars', sheetUrl: '', billetera: {} };
+            currentData = { ingresos: { fijo: 0, extra: 0 }, gastos: [], monedaBase: 'ars', sheetUrl: '', billetera: {}, presupuestos: {} };
         }
-        
+
         updateUIConfig();
         updateDashboard();
         renderTable();
-        updateMonthDisplay(); 
+        updateMonthDisplay();
+        checkRecordatorioRecurrentes();
 
     } catch (e) {
         console.error("Error:", e);
@@ -439,6 +455,7 @@ async function saveData(allUserDataOverride = null) {
         allUserData.global.monedaVisual = currentData.monedaVisual; 
         allUserData.global.sheetUrl = currentData.sheetUrl;
         allUserData.global.billetera = currentData.billetera;
+        allUserData.global.presupuestos = currentData.presupuestos;
 
         // FIX #1: Actualizar caché con los datos que acabamos de armar
         cachedAllData = allUserData;
@@ -787,23 +804,28 @@ function formatCurrency(amount) {
 }
 
 // --- FUNCIONES UI BÁSICAS ---
-function renderTable() {
-    const tbody = document.getElementById('listaGastos');
-    tbody.innerHTML = '';
 
-    const hayGastosVisibles = currentData.gastos && currentData.gastos.some(g => !g.isDeleted);
-
-    if (!hayGastosVisibles) {
-        document.getElementById('emptyState').style.display = 'block';
-        return;
-    }
-    document.getElementById('emptyState').style.display = 'none';
-    
-    const gastosAMostrar = currentData.gastos
+// Aplica el buscador de texto, el filtro de categoría y el orden activo.
+// La usan tanto renderTable() como exportGastosCSV(), para que la exportación
+// respete siempre lo que el usuario está viendo en pantalla.
+function getGastosFiltradosYOrdenados() {
+    let lista = currentData.gastos
         .map((g, i) => ({ ...g, originalIndex: i }))
         .filter(g => !g.isDeleted);
 
-    gastosAMostrar.sort((a, b) => {
+    if (tableFilterText.trim() !== '') {
+        const q = tableFilterText.trim().toLowerCase();
+        lista = lista.filter(g =>
+            (g.descripcion || '').toLowerCase().includes(q) ||
+            (g.categoria || '').toLowerCase().includes(q)
+        );
+    }
+
+    if (tableFilterCategoria !== '') {
+        lista = lista.filter(g => (g.categoria || 'Varios') === tableFilterCategoria);
+    }
+
+    lista.sort((a, b) => {
         let vA, vB;
         if (tableSortCol === 'monto') {
             vA = a.monto || 0; vB = b.monto || 0;
@@ -819,6 +841,56 @@ function renderTable() {
             return vA.localeCompare(vB) * tableSortDir;
         }
     });
+
+    return lista;
+}
+
+// Se llama desde el buscador y el select de categoría del filtro de la tabla
+function aplicarFiltroTabla() {
+    tableFilterText = document.getElementById('filtroTexto').value;
+    tableFilterCategoria = document.getElementById('filtroCategoria').value;
+    renderTable();
+}
+
+// Llena el <select> de categorías del filtro con las categorías realmente usadas este mes
+function populateCategoryFilterOptions() {
+    const select = document.getElementById('filtroCategoria');
+    if (!select) return;
+    const valorPrevio = select.value;
+
+    const categorias = [...new Set(
+        (currentData.gastos || [])
+            .filter(g => !g.isDeleted)
+            .map(g => g.categoria || 'Varios')
+    )].sort((a, b) => a.localeCompare(b));
+
+    select.innerHTML = '<option value="">Todas las categorías</option>' +
+        categorias.map(c => `<option value="${escapeHtml(c)}">${escapeHtml(c)}</option>`).join('');
+
+    if (categorias.includes(valorPrevio)) select.value = valorPrevio;
+}
+
+function renderTable() {
+    const tbody = document.getElementById('listaGastos');
+    tbody.innerHTML = '';
+
+    populateCategoryFilterOptions();
+
+    const hayGastosDelMes = currentData.gastos && currentData.gastos.some(g => !g.isDeleted);
+    const gastosAMostrar = getGastosFiltradosYOrdenados();
+
+    if (!hayGastosDelMes) {
+        document.getElementById('emptyState').style.display = 'block';
+        document.getElementById('emptyState').querySelector('p').textContent = 'No hay gastos registrados este mes.';
+        return;
+    }
+
+    if (gastosAMostrar.length === 0) {
+        document.getElementById('emptyState').style.display = 'block';
+        document.getElementById('emptyState').querySelector('p').textContent = 'Ningún gasto coincide con el filtro.';
+        return;
+    }
+    document.getElementById('emptyState').style.display = 'none';
 
     gastosAMostrar.forEach((g) => {
         const tr = document.createElement('tr');
@@ -1205,6 +1277,181 @@ function updateDashboard() {
 
     document.querySelectorAll('.lblMonedaBase').forEach(el => el.textContent = currentData.monedaBase.toUpperCase());
     document.getElementById('lblMonedaVisual').textContent = currentData.monedaVisual.toUpperCase();
+
+    checkPresupuestosExcedidos();
+}
+
+// --- EXPORTAR CSV ---
+function exportGastosCSV() {
+    const gastos = getGastosFiltradosYOrdenados();
+    if (gastos.length === 0) {
+        showNotification("No hay gastos para exportar", "error");
+        return;
+    }
+
+    const escapeCsv = (val) => `"${String(val ?? '').replace(/"/g, '""')}"`;
+    const header = ['Fecha', 'Descripción', 'Categoría', `Monto (${currentData.monedaBase.toUpperCase()})`, 'Pagado'];
+    const filas = gastos.map(g => [
+        g.fecha || '',
+        g.descripcion || '',
+        g.categoria || 'Varios',
+        g.monto || 0,
+        g.isPaid ? 'Sí' : 'No'
+    ]);
+
+    const csv = [header, ...filas].map(fila => fila.map(escapeCsv).join(',')).join('\r\n');
+    const blob = new Blob(['﻿' + csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const monthKey = `${currentYear}-${String(currentMonth).padStart(2, '0')}`;
+
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `tugasto_movimientos_${monthKey}.csv`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+}
+
+// --- REPORTES POR CATEGORÍA Y PRESUPUESTOS ---
+
+// Total gastado por categoría en el mes actual (no distingue pagado/pendiente)
+function getCategoryBreakdown() {
+    const totales = {};
+    (currentData.gastos || []).filter(g => !g.isDeleted).forEach(g => {
+        const cat = g.categoria || 'Varios';
+        totales[cat] = (totales[cat] || 0) + (g.monto || 0);
+    });
+    return Object.entries(totales)
+        .map(([categoria, total]) => ({ categoria, total }))
+        .sort((a, b) => b.total - a.total);
+}
+
+function openReportesModal() {
+    renderReportesCategorias();
+    renderReportesHistorial();
+    openModal('modalReportes');
+}
+
+function renderReportesCategorias() {
+    const cont = document.getElementById('reportesCategorias');
+    if (!cont) return;
+    const breakdown = getCategoryBreakdown();
+
+    if (breakdown.length === 0) {
+        cont.innerHTML = '<small style="color:#94a3b8;">No hay gastos este mes todavía.</small>';
+        return;
+    }
+
+    const maxTotal = Math.max(...breakdown.map(b => b.total), 1);
+
+    cont.innerHTML = breakdown.map(({ categoria, total }) => {
+        const presupuesto = parseFloat(currentData.presupuestos[categoria]) || 0;
+        const pctBarra = Math.min(100, (total / maxTotal) * 100);
+        const sobrePresupuesto = presupuesto > 0 && total > presupuesto;
+
+        return `
+            <div class="reporte-cat-row">
+                <div class="reporte-cat-info">
+                    <span class="reporte-cat-nombre">${escapeHtml(categoria)}</span>
+                    <span class="reporte-cat-monto">${formatCurrency(total)}${presupuesto > 0 ? ` / ${formatCurrency(presupuesto)}` : ''}</span>
+                </div>
+                <div class="reporte-cat-barra-bg">
+                    <div class="reporte-cat-barra ${sobrePresupuesto ? 'over-budget' : ''}" style="width:${pctBarra}%;"></div>
+                </div>
+                <div class="reporte-cat-presupuesto">
+                    <span>Presupuesto mensual:</span>
+                    <input type="number" class="input-presupuesto" data-categoria="${escapeHtml(categoria)}" value="${presupuesto || ''}" placeholder="Sin límite" step="any" min="0">
+                </div>
+            </div>
+        `;
+    }).join('');
+}
+
+function guardarPresupuestos() {
+    document.querySelectorAll('.input-presupuesto').forEach(input => {
+        const categoria = input.dataset.categoria;
+        const valor = parseFloat(input.value);
+        if (!isNaN(valor) && valor > 0) {
+            currentData.presupuestos[categoria] = valor;
+        } else {
+            delete currentData.presupuestos[categoria];
+        }
+    });
+    presupuestosAvisados.clear(); // si cambiaron los límites, vuelve a avisar si corresponde
+    saveData();
+    renderReportesCategorias();
+    showNotification("Presupuestos guardados");
+}
+
+// Avisa (una vez por categoría y por sesión) si el gasto del mes supera el presupuesto definido
+function checkPresupuestosExcedidos() {
+    if (!currentData.presupuestos || Object.keys(currentData.presupuestos).length === 0) return;
+
+    const breakdown = getCategoryBreakdown();
+    breakdown.forEach(({ categoria, total }) => {
+        const presupuesto = parseFloat(currentData.presupuestos[categoria]) || 0;
+        if (presupuesto > 0 && total > presupuesto && !presupuestosAvisados.has(categoria)) {
+            presupuestosAvisados.add(categoria);
+            showNotification(`Superaste el presupuesto de "${categoria}" este mes (${formatCurrency(total)} de ${formatCurrency(presupuesto)})`, "error");
+        }
+    });
+}
+
+// --- HISTORIAL / COMPARATIVA MENSUAL ---
+async function renderReportesHistorial() {
+    const cont = document.getElementById('reportesHistorial');
+    if (!cont) return;
+    cont.innerHTML = '<small style="color:#94a3b8;">Cargando...</small>';
+
+    const allUserData = await getAllDataRaw();
+    const monthKeys = Object.keys(allUserData)
+        .filter(k => k.includes('-'))
+        .sort()
+        .slice(-6); // últimos 6 meses con datos, para que las barras no queden ilegibles
+
+    if (monthKeys.length === 0) {
+        cont.innerHTML = '<small style="color:#94a3b8;">Todavía no hay historial suficiente.</small>';
+        return;
+    }
+
+    const monthNamesShort = ["Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"];
+
+    const balances = monthKeys.map(key => {
+        const mes = allUserData[key];
+        const ingresosTotal = (parseFloat(mes.ingresos?.fijo) || 0) + (parseFloat(mes.ingresos?.extra) || 0);
+        const gastosTotal = (mes.gastos || []).filter(g => !g.isDeleted).reduce((sum, g) => sum + (g.monto || 0), 0);
+        const [y, m] = key.split('-').map(Number);
+        return { label: `${monthNamesShort[m - 1]} ${String(y).slice(2)}`, balance: ingresosTotal - gastosTotal };
+    });
+
+    const maxAbs = Math.max(...balances.map(b => Math.abs(b.balance)), 1);
+
+    cont.innerHTML = balances.map(({ label, balance }) => {
+        const alturaPct = Math.max(4, (Math.abs(balance) / maxAbs) * 100);
+        return `
+            <div class="historial-mes-col" title="${escapeHtml(label)}: ${formatCurrency(balance)}">
+                <div class="historial-mes-barra ${balance < 0 ? 'negativo' : ''}" style="height:${alturaPct}%;"></div>
+                <span class="historial-mes-label">${escapeHtml(label)}</span>
+            </div>
+        `;
+    }).join('');
+}
+
+// --- RECORDATORIO DE GASTOS RECURRENTES PENDIENTES ---
+function checkRecordatorioRecurrentes() {
+    const monthKey = `${currentYear}-${String(currentMonth).padStart(2, '0')}`;
+    if (recordatorioMostradoParaMes === monthKey) return; // ya avisado para este mes en esta sesión
+    recordatorioMostradoParaMes = monthKey;
+
+    const pendientes = (currentData.gastos || []).filter(g =>
+        !g.isDeleted && !g.isPaid && (g.esRecurrente || g.idRecurrencia)
+    );
+
+    if (pendientes.length === 0) return;
+
+    const nombres = pendientes.map(g => g.descripcion).join(', ');
+    showNotification(`Tenés ${pendientes.length} gasto${pendientes.length > 1 ? 's' : ''} recurrente${pendientes.length > 1 ? 's' : ''} pendiente${pendientes.length > 1 ? 's' : ''} de pago: ${nombres}`, "secondary");
 }
 
 function updateUIConfig() {

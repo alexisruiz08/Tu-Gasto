@@ -276,11 +276,26 @@
         <div class="transactions-container glass-panel">
             <div class="section-header">
                 <h3>Movimientos</h3>
-                <button onclick="openModal('modalGasto')" class="btn-primary btn-icon">
-                    <i data-lucide="plus"></i> Nuevo Gasto
-                </button>
+                <div class="section-header-actions">
+                    <button onclick="openReportesModal()" class="btn-secondary btn-icon btn-sm" title="Reportes y presupuestos">
+                        <i data-lucide="bar-chart-3"></i> Reportes
+                    </button>
+                    <button onclick="exportGastosCSV()" class="btn-secondary btn-icon btn-sm" title="Exportar a CSV">
+                        <i data-lucide="download"></i> Exportar
+                    </button>
+                    <button onclick="openModal('modalGasto')" class="btn-primary btn-icon">
+                        <i data-lucide="plus"></i> Nuevo Gasto
+                    </button>
+                </div>
             </div>
-            
+
+            <div class="filter-bar">
+                <input type="text" id="filtroTexto" placeholder="Buscar por descripción o categoría..." oninput="aplicarFiltroTabla()">
+                <select id="filtroCategoria" onchange="aplicarFiltroTabla()">
+                    <option value="">Todas las categorías</option>
+                </select>
+            </div>
+
             <div class="table-responsive">
                 <table class="modern-table">
                     <thead>
@@ -467,6 +482,30 @@
                 </div>
 
                 <button onclick="guardarConfig()" class="btn-primary full-width" style="margin-top:15px;">Guardar Configuración</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL: Reportes y Presupuestos -->
+    <div id="modalReportes" class="modal-overlay">
+        <div class="modal-card modal-card-wide">
+            <div class="modal-header">
+                <h3>Reportes y Presupuestos</h3>
+                <button onclick="closeModal('modalReportes')" class="close-btn" aria-label="Cerrar"><i data-lucide="x"></i></button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label>Gastos por Categoría (mes actual) y presupuesto mensual</label>
+                    <div id="reportesCategorias" class="reportes-categorias"></div>
+                    <button onclick="guardarPresupuestos()" class="btn-primary full-width" style="margin-top:10px;">Guardar Presupuestos</button>
+                </div>
+
+                <hr style="border:0; border-top:1px solid var(--glass-border); margin:20px 0;">
+
+                <div class="form-group" style="margin-bottom:0;">
+                    <label>Balance de los últimos meses</label>
+                    <div id="reportesHistorial" class="reportes-historial"></div>
+                </div>
             </div>
         </div>
     </div>
