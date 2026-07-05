@@ -1,5 +1,12 @@
 DirectoryIndex index.php
 
+# Forzar HTTPS en todo el sitio
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    RewriteCond %{HTTPS} off
+    RewriteRule ^(.*)$ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
+</IfModule>
+
 # Bloquear acceso directo por HTTP al archivo de configuración/credenciales
 <FilesMatch "^config\.php$">
     <IfModule mod_authz_core.c>

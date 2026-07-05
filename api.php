@@ -33,9 +33,11 @@ $options = [
 try {
     $pdo = new PDO($dsn, $user, $pass, $options);
 } catch (\PDOException $e) {
-    // Error de conexión
+    // El detalle técnico queda solo en el log del servidor; al cliente no le
+    // mostramos nada que pueda revelar estructura interna de la base de datos.
+    error_log('TuGasto DB connection error: ' . $e->getMessage());
     http_response_code(500);
-    echo json_encode(['status' => 'error', 'message' => 'Error de conexión DB: ' . $e->getMessage()]);
+    echo json_encode(['status' => 'error', 'message' => 'Error del servidor. Intenta de nuevo en unos minutos.']);
     exit;
 }
 
@@ -46,26 +48,31 @@ $pdo->exec("CREATE TABLE IF NOT EXISTS login_attempts (
     last_attempt DATETIME NOT NULL
 ) ENGINE=InnoDB");
 
+// Límites para login/registro (pocos intentos, ventana larga: anti fuerza bruta)
 const RATE_LIMIT_MAX_ATTEMPTS = 8;
 const RATE_LIMIT_WINDOW_MIN = 15;
 
-function isRateLimited(PDO $pdo, string $identifier): bool {
+// Límite para endpoints de datos ya autenticados (más laxo, ventana corta: anti abuso/spam)
+const API_RATE_LIMIT_MAX_ATTEMPTS = 60;
+const API_RATE_LIMIT_WINDOW_MIN = 1;
+
+function isRateLimited(PDO $pdo, string $identifier, int $maxAttempts = RATE_LIMIT_MAX_ATTEMPTS, int $windowMin = RATE_LIMIT_WINDOW_MIN): bool {
     $stmt = $pdo->prepare("SELECT attempts, last_attempt FROM login_attempts WHERE identifier = ?");
     $stmt->execute([$identifier]);
     $row = $stmt->fetch();
     if (!$row) return false;
 
     $minutesSince = (time() - strtotime($row['last_attempt'])) / 60;
-    if ($minutesSince > RATE_LIMIT_WINDOW_MIN) return false; // ventana expirada
+    if ($minutesSince > $windowMin) return false; // ventana expirada
 
-    return $row['attempts'] >= RATE_LIMIT_MAX_ATTEMPTS;
+    return $row['attempts'] >= $maxAttempts;
 }
 
-function registerFailedAttempt(PDO $pdo, string $identifier): void {
+function registerFailedAttempt(PDO $pdo, string $identifier, int $windowMin = RATE_LIMIT_WINDOW_MIN): void {
     $stmt = $pdo->prepare("
         INSERT INTO login_attempts (identifier, attempts, last_attempt) VALUES (?, 1, NOW())
         ON DUPLICATE KEY UPDATE
-            attempts = IF(last_attempt < DATE_SUB(NOW(), INTERVAL " . RATE_LIMIT_WINDOW_MIN . " MINUTE), 1, attempts + 1),
+            attempts = IF(last_attempt < DATE_SUB(NOW(), INTERVAL $windowMin MINUTE), 1, attempts + 1),
             last_attempt = NOW()
     ");
     $stmt->execute([$identifier]);
@@ -74,6 +81,16 @@ function registerFailedAttempt(PDO $pdo, string $identifier): void {
 function clearRateLimit(PDO $pdo, string $identifier): void {
     $stmt = $pdo->prepare("DELETE FROM login_attempts WHERE identifier = ?");
     $stmt->execute([$identifier]);
+}
+
+// Rate limit simple para endpoints de datos: cuenta llamadas sin bloquear por fallos,
+// solo corta si se superan las N llamadas permitidas en la ventana.
+function isApiRateLimited(PDO $pdo, string $identifier): bool {
+    if (isRateLimited($pdo, $identifier, API_RATE_LIMIT_MAX_ATTEMPTS, API_RATE_LIMIT_WINDOW_MIN)) {
+        return true;
+    }
+    registerFailedAttempt($pdo, $identifier, API_RATE_LIMIT_WINDOW_MIN);
+    return false;
 }
 
 // Identificador para el límite: IP (evita que un atacante pruebe usuarios ilimitados desde la misma IP)
@@ -300,6 +317,11 @@ if ($action === 'get_quotes') {
 
 // Obtener datos de usuario
 if ($action === 'get_data') {
+    if (isApiRateLimited($pdo, 'get_data:' . $_SESSION['user_id'])) {
+        http_response_code(429);
+        echo json_encode(['status' => 'error', 'message' => 'Demasiadas solicitudes. Espera un momento.']);
+        exit;
+    }
     $stmt = $pdo->prepare("SELECT data FROM usertugasto WHERE id = ?");
     $stmt->execute([$_SESSION['user_id']]);
     $result = $stmt->fetch();
@@ -309,6 +331,11 @@ if ($action === 'get_data') {
 
 // Guardar datos de usuario
 if ($action === 'save_data') {
+    if (isApiRateLimited($pdo, 'save_data:' . $_SESSION['user_id'])) {
+        http_response_code(429);
+        echo json_encode(['status' => 'error', 'message' => 'Demasiadas solicitudes. Espera un momento.']);
+        exit;
+    }
     $data = $_POST['data'] ?? '{}';
 
     // Límite de tamaño para evitar abuso de almacenamiento (2 MB es de sobra para este uso)
