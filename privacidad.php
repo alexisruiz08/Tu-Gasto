@@ -5,8 +5,16 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Política de Privacidad | TuGasto.com</title>
+    <meta name="description" content="Política de Privacidad de TuGasto.com: qué datos recopilamos, cómo los usamos y tus derechos sobre tu información personal y financiera.">
     <meta name="robots" content="index, follow">
     <link rel="canonical" href="https://tugasto.com/privacidad.php">
+
+    <meta property="og:title" content="Política de Privacidad | TuGasto.com" />
+    <meta property="og:description" content="Qué datos recopila TuGasto.com, cómo los usa y tus derechos sobre tu información." />
+    <meta property="og:url" content="https://tugasto.com/privacidad.php" />
+    <meta property="og:type" content="website" />
+    <meta property="og:locale" content="es_AR" />
+
     <link rel="stylesheet" href="styles.css?v=<?php echo filemtime('styles.css'); ?>">
     <link rel="icon" type="image/png" sizes="32x32" href="/tugastoo.png">
 </head>

@@ -37,6 +37,8 @@
       "@type": "WebApplication",
       "name": "TuGasto.com",
       "url": "https://tugasto.com",
+      "image": "https://tugasto.com/tugasto.png",
+      "inLanguage": "es",
       "description": "App web gratuita para controlar gastos, ingresos y ahorros en múltiples monedas. Ideal para Argentina, Uruguay y Latinoamérica.",
       "applicationCategory": "FinanceApplication",
       "operatingSystem": "Web",
@@ -48,8 +50,11 @@
       "featureList": [
         "Control de gastos personales",
         "Ingresos y presupuesto mensual",
-        "Billetera multimoneda: pesos, dólares, cripto",
+        "Billetera multimoneda: pesos, dólares y criptomonedas",
         "Gastos recurrentes automáticos",
+        "Presupuestos por categoría",
+        "Reportes de gastos y comparativa mensual",
+        "Exportación de movimientos a CSV",
         "Balance en tiempo real",
         "100% gratuito"
       ]
@@ -120,11 +125,11 @@
 
     <main id="landingLayout">
         
-        <section id="infoPanel" style="display: none;">
-            <h2 class="landing-title">
+        <section id="infoPanel">
+            <h1 class="landing-title">
                 Controla <span style="color: white;">Tu Gasto</span> Multimoneda
-            </h2>
-            
+            </h1>
+
             <p class="landing-subtitle">
                 TuGasto.com evoluciona. Administra tus finanzas personales en Pesos, Dólares o Criptomonedas con tipos de cambio reales.
             </p>
@@ -165,10 +170,10 @@
             </ul>
         </section>
 
-        <div id="authPanel" class="glass-panel auth-container">
+        <div id="authPanel" class="glass-panel auth-container" style="display: none;">
             <div class="logo-area">
                 <img src="tugasto.png" alt="Logo de TuGasto.com" width="80" height="80">
-                <h1>TuGasto.com</h1>
+                <p class="auth-brand">TuGasto.com</p>
             </div>
             <h2 class="auth-title" id="authTitle">Bienvenido</h2>
             

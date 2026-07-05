@@ -17,3 +17,13 @@ DirectoryIndex index.php
         Deny from all
     </IfModule>
 </FilesMatch>
+
+# Cache largo para assets estáticos (ya se bustean solos con ?v=<?php echo filemtime(...) ?>
+# en index.php, así que un cache largo acá no sirve versiones viejas por error)
+<IfModule mod_expires.c>
+    ExpiresActive On
+    ExpiresByType text/css "access plus 1 year"
+    ExpiresByType application/javascript "access plus 1 year"
+    ExpiresByType image/png "access plus 1 year"
+    ExpiresByType image/x-icon "access plus 1 year"
+</IfModule>

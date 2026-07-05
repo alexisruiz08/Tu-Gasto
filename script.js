@@ -225,7 +225,7 @@ async function checkSession() {
             document.getElementById('landingLayout').style.display = 'flex';
             document.getElementById('mainContent').style.display = 'none';
             if(window.startParticles) window.startParticles();
-            showAuthOnly(); 
+            showInfoOnly();
         }
     } catch (e) {
         const pending = localStorage.getItem('pendingSyncData');
@@ -252,7 +252,7 @@ async function checkSession() {
             document.getElementById('landingLayout').style.display = 'flex';
             document.getElementById('mainContent').style.display = 'none';
             if(window.startParticles) window.startParticles();
-            showAuthOnly();
+            showInfoOnly();
         }
     }
 }

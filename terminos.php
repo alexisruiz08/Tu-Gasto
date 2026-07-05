@@ -5,8 +5,16 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Términos de Servicio | TuGasto.com</title>
+    <meta name="description" content="Términos de Servicio de TuGasto.com, la app web gratuita para controlar gastos, ingresos y ahorros en pesos, dólares y cripto.">
     <meta name="robots" content="index, follow">
     <link rel="canonical" href="https://tugasto.com/terminos.php">
+
+    <meta property="og:title" content="Términos de Servicio | TuGasto.com" />
+    <meta property="og:description" content="Términos de Servicio de TuGasto.com, la app web gratuita para controlar gastos, ingresos y ahorros." />
+    <meta property="og:url" content="https://tugasto.com/terminos.php" />
+    <meta property="og:type" content="website" />
+    <meta property="og:locale" content="es_AR" />
+
     <link rel="stylesheet" href="styles.css?v=<?php echo filemtime('styles.css'); ?>">
     <link rel="icon" type="image/png" sizes="32x32" href="/tugastoo.png">
 </head>

@@ -1,0 +1,8 @@
+User-agent: *
+Allow: /
+Disallow: /api.php
+Disallow: /config.php
+Disallow: /backup.php
+Disallow: /backups/
+
+Sitemap: https://tugasto.com/sitemap.xml
