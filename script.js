@@ -22,15 +22,59 @@ let currentData = {
 // FIX #1: Caché de todos los datos del usuario para evitar doble GET en saveData
 let cachedAllData = null;
 
-// Cotizaciones de Respaldo
-let exchangeRatesUSD = { 
-    'usd': 1, 
-    'ars': 0.0009, 
-    'bitcoin': 90000,
-    'ethereum': 3300,
-    'tether': 1,
-    'uyu': 0.025
-}; 
+// Catálogo de activos soportados (todos los que trae la hoja de cotizaciones).
+// "ticker" es lo que se muestra en la UI (billetera, selects, resumen), en vez
+// del nombre interno crudo (ej: "bitcoin" -> "BTC").
+const ASSET_INFO = {
+    usd:      { nombre: 'Dólar (USD)',            ticker: 'USD',  tipo: 'fiat' },
+    eur:      { nombre: 'Euro (EUR)',              ticker: 'EUR',  tipo: 'fiat' },
+    ars:      { nombre: 'Peso Argentino (ARS)',    ticker: 'ARS',  tipo: 'fiat' },
+    uyu:      { nombre: 'Peso Uruguayo (UYU)',     ticker: 'UYU',  tipo: 'fiat' },
+    brl:      { nombre: 'Real Brasileño (BRL)',    ticker: 'BRL',  tipo: 'fiat' },
+    clp:      { nombre: 'Peso Chileno (CLP)',      ticker: 'CLP',  tipo: 'fiat' },
+    cop:      { nombre: 'Peso Colombiano (COP)',   ticker: 'COP',  tipo: 'fiat' },
+    mxn:      { nombre: 'Peso Mexicano (MXN)',     ticker: 'MXN',  tipo: 'fiat' },
+    pen:      { nombre: 'Sol Peruano (PEN)',       ticker: 'PEN',  tipo: 'fiat' },
+    gbp:      { nombre: 'Libra Esterlina (GBP)',   ticker: 'GBP',  tipo: 'fiat' },
+    bitcoin:  { nombre: 'Bitcoin (BTC)',           ticker: 'BTC',  tipo: 'cripto' },
+    ethereum: { nombre: 'Ethereum (ETH)',          ticker: 'ETH',  tipo: 'cripto' },
+    tether:   { nombre: 'Tether (USDT)',           ticker: 'USDT', tipo: 'cripto' },
+    bnb:      { nombre: 'BNB (BNB)',               ticker: 'BNB',  tipo: 'cripto' },
+    cardano:  { nombre: 'Cardano (ADA)',           ticker: 'ADA',  tipo: 'cripto' },
+    litecoin: { nombre: 'Litecoin (LTC)',          ticker: 'LTC',  tipo: 'cripto' },
+    polkadot: { nombre: 'Polkadot (DOT)',          ticker: 'DOT',  tipo: 'cripto' },
+    solana:   { nombre: 'Solana (SOL)',            ticker: 'SOL',  tipo: 'cripto' },
+    xrp:      { nombre: 'XRP (XRP)',               ticker: 'XRP',  tipo: 'cripto' },
+};
+
+// Símbolos de moneda fiat para formatMoney() (las cripto se muestran con su ticker, ej "0.00050000 BTC")
+const FIAT_SYMBOLS = { usd: 'US$', eur: '€', ars: '$', uyu: '$U', brl: 'R$', clp: '$', cop: '$', mxn: '$', pen: 'S/', gbp: '£' };
+
+function getAssetTicker(key) { return ASSET_INFO[key]?.ticker || String(key).toUpperCase(); }
+function isAssetCripto(key) { return ASSET_INFO[key]?.tipo === 'cripto'; }
+
+// Cotizaciones de Respaldo (snapshot real, se usa solo si falla el fetch a la hoja de cálculo)
+let exchangeRatesUSD = {
+    ars: 0.0006699242852,
+    bitcoin: 62716,
+    bnb: 587.241266,
+    brl: 0.1934235977,
+    cardano: 0.18908874,
+    clp: 0.001080360218,
+    cop: 0.0002976725002,
+    ethereum: 1779.8881,
+    eur: 1.1442,
+    gbp: 1.33905001,
+    litecoin: 45.6201,
+    mxn: 0.05723240132,
+    pen: 0.293792229,
+    polkadot: 0.8815,
+    solana: 80.9355,
+    tether: 1,
+    usd: 1,
+    uyu: 0.02485555814,
+    xrp: 1.134,
+};
 
 // Variables UI
 let currentMonth = new Date().getMonth() + 1; 
@@ -517,10 +561,11 @@ async function fetchSheetRates() {
 
         if (json.status !== 'success') throw new Error(json.message);
 
-        const text = json.data; 
+        const text = json.data;
         const lines = text.split('\n');
-        
-        exchangeRatesUSD = { 'usd': 1, 'ars': 0.0009, 'bitcoin': 90000 }; 
+
+        // No reseteamos exchangeRatesUSD: si una moneda no viene en esta lectura puntual
+        // de la hoja, conserva el último valor conocido en vez de desaparecer.
         let foundData = false;
 
         lines.forEach((line) => {
@@ -656,7 +701,7 @@ function calcularImpacto() {
     if (transferType === 'retiro') impacto = -impacto;
     
     document.getElementById('transferImpacto').value = Math.abs(impacto).toFixed(2);
-    document.getElementById('lblCotizacionDisplay').textContent = `1${moneda.toUpperCase()} = ${formatNumber(cotizacion, 2)} ${base.toUpperCase()}`;
+    document.getElementById('lblCotizacionDisplay').textContent = `1 ${getAssetTicker(moneda)} = ${formatNumber(cotizacion, 2)} ${base.toUpperCase()}`;
 }
 
 function ejecutarTransferencia() {
@@ -678,7 +723,7 @@ function ejecutarTransferencia() {
             currentData.ingresos.extra = (parseFloat(currentData.ingresos.extra) || 0) + Math.abs(impacto);
         } else {
             currentData.gastos.push({
-                descripcion: `Compra ${moneda.toUpperCase()}`,
+                descripcion: `Compra ${getAssetTicker(moneda)}`,
                 monto: impacto,
                 categoria: 'Inversión',
                 fecha: new Date().toISOString().split('T')[0],
@@ -688,7 +733,7 @@ function ejecutarTransferencia() {
         }
     } else {
         if ((currentData.billetera[moneda] || 0) < cantidad) {
-            showNotification("Saldo insuficiente en " + moneda.toUpperCase(), "error");
+            showNotification("Saldo insuficiente en " + getAssetTicker(moneda), "error");
             return;
         }
         currentData.billetera[moneda] -= cantidad;
@@ -723,30 +768,63 @@ function guardarConfig() {
 
 function toggleSaldosManuales() {
     const panel = document.getElementById('panelSaldosManuales');
-    panel.innerHTML = ''; 
-    
+    panel.innerHTML = '';
+
     const monedas = Object.keys(currentData.billetera);
-    
+
     if (monedas.length === 0) {
         panel.innerHTML = '<small style="color:#94a3b8;">No tienes activos guardados aún.</small>';
+        return;
     }
 
-    monedas.forEach(m => {
-        const val = currentData.billetera[m];
-        const div = document.createElement('div');
-        div.style.cssText = "display:flex; align-items:center; gap:10px; margin-bottom:5px;";
-        div.innerHTML = `
-            <label style="width:60px; margin:0; font-size:0.8rem;">${m.toUpperCase()}</label>
-            <input type="number" class="input-saldo-manual" data-moneda="${m}" value="${val}" step="any" style="margin:0; padding:5px; flex:1;">
-            <button onclick="eliminarMoneda('${m}')" class="btn-icon-only btn-delete" aria-label="Eliminar activo ${m.toUpperCase()}"><i data-lucide="trash-2"></i></button>
-        `;
-        panel.appendChild(div);
-    });
+    // Agrupamos Fiat y Cripto por separado, y ordenamos alfabéticamente por ticker
+    // dentro de cada grupo, para que la lista sea fácil de escanear con muchos activos.
+    const fiat = monedas.filter(m => !isAssetCripto(m)).sort((a, b) => getAssetTicker(a).localeCompare(getAssetTicker(b)));
+    const cripto = monedas.filter(m => isAssetCripto(m)).sort((a, b) => getAssetTicker(a).localeCompare(getAssetTicker(b)));
+
+    const renderGrupo = (titulo, lista) => {
+        if (lista.length === 0) return '';
+        const filas = lista.map(m => {
+            const val = currentData.billetera[m];
+            return `
+                <div style="display:flex; align-items:center; gap:10px; margin-bottom:5px;">
+                    <label style="width:60px; margin:0; font-size:0.8rem;" title="${escapeHtml(ASSET_INFO[m]?.nombre || m)}">${getAssetTicker(m)}</label>
+                    <input type="number" class="input-saldo-manual" data-moneda="${m}" value="${val}" step="any" style="margin:0; padding:5px; flex:1;">
+                    <button onclick="eliminarMoneda('${m}')" class="btn-icon-only btn-delete" aria-label="Eliminar activo ${getAssetTicker(m)}"><i data-lucide="trash-2"></i></button>
+                </div>
+            `;
+        }).join('');
+        return `<div style="font-size:0.7rem; color:#94a3b8; text-transform:uppercase; letter-spacing:0.05em; margin:8px 0 4px;">${titulo}</div>${filas}`;
+    };
+
+    panel.innerHTML = renderGrupo('Monedas', fiat) + renderGrupo('Criptomonedas', cripto);
     lucide.createIcons();
+
+    populateSelectNuevaMoneda();
+}
+
+// Llena "+ Agregar otro activo..." con todo el catálogo disponible, agrupado en
+// Monedas/Criptomonedas, excluyendo los activos que ya están en la billetera.
+function populateSelectNuevaMoneda() {
+    const select = document.getElementById('selectNuevaMoneda');
+    if (!select) return;
+
+    const yaAgregadas = new Set(Object.keys(currentData.billetera));
+    const disponibles = Object.keys(ASSET_INFO).filter(k => !yaAgregadas.has(k));
+
+    const armarOptions = (tipo) => disponibles
+        .filter(k => ASSET_INFO[k].tipo === tipo)
+        .sort((a, b) => ASSET_INFO[a].ticker.localeCompare(ASSET_INFO[b].ticker))
+        .map(k => `<option value="${k}">${escapeHtml(ASSET_INFO[k].nombre)}</option>`)
+        .join('');
+
+    select.innerHTML = '<option value="">+ Agregar otro activo...</option>' +
+        `<optgroup label="Monedas">${armarOptions('fiat')}</optgroup>` +
+        `<optgroup label="Criptomonedas">${armarOptions('cripto')}</optgroup>`;
 }
 
 function eliminarMoneda(moneda) {
-    if (confirm(`¿Eliminar el activo ${moneda.toUpperCase()}?`)) {
+    if (confirm(`¿Eliminar el activo ${getAssetTicker(moneda)}?`)) {
         delete currentData.billetera[moneda];
         toggleSaldosManuales();
         saveData();
@@ -777,16 +855,14 @@ function formatNumber(n, decimals = 0) {
     return Math.round(n).toLocaleString('es-AR');
 }
 
-function formatMoney(n, curr) { 
-    const symbols = {
-        'ars': '$',
-        'usd': 'US$',
-        'eur': '€',
-        'uyu': '$U'
-    };
-    const isCrypto = ['bitcoin', 'ethereum', 'tether'].includes(curr);
-    const formatted = isCrypto ? formatNumber(n, 8) : formatNumber(Math.round(n));
-    return (symbols[curr] || '$') + ' ' + formatted; 
+function formatMoney(n, curr) {
+    // Cripto: se muestra el monto seguido del ticker (ej "0.00050000 BTC"), nunca con
+    // símbolo de moneda fiat, para no confundir "$" con un valor que no es peso ni dólar.
+    if (isAssetCripto(curr)) {
+        return `${formatNumber(n, 8)} ${getAssetTicker(curr)}`;
+    }
+    const formatted = formatNumber(Math.round(n));
+    return (FIAT_SYMBOLS[curr] || '$') + ' ' + formatted;
 }
 
 function formatDate(dateStr) { const [y, m, d] = dateStr.split('-'); return `${d}/${m}`; }
@@ -1131,7 +1207,7 @@ function openModal(id) {
     if (id === 'modalGasto' && document.getElementById('tituloModalGasto').textContent !== "Editar Gasto") {
         document.getElementById('descGasto').value = '';
         document.getElementById('montoGasto').value = '';
-        document.getElementById('catGasto').value = '';
+        document.getElementById('catGasto').selectedIndex = 0;
         document.getElementById('fechaGasto').value = new Date().toISOString().split('T')[0];
         document.getElementById('editIndex').value = "";
         document.getElementById('recurrenteCheck').checked = false;
@@ -1269,7 +1345,7 @@ function updateDashboard() {
         if (saldo > 0) {
             const valorEnVisual = convertCurrency(saldo, moneda, currentData.monedaVisual);
             ahorroTotal += valorEnVisual;
-            detalleAhorros += `${moneda.toUpperCase()}: ${formatNumber(saldo, moneda === 'bitcoin' || moneda === 'ethereum' ? 8 : 2)}\n`;
+            detalleAhorros += `${getAssetTicker(moneda)}: ${formatNumber(saldo, isAssetCripto(moneda) ? 8 : 2)}\n`;
         }
     }
     document.getElementById('displayAhorroTotal').textContent = formatMoney(ahorroTotal, currentData.monedaVisual);
@@ -1456,15 +1532,19 @@ function checkRecordatorioRecurrentes() {
 
 function updateUIConfig() {
     const selectTransfer = document.getElementById('transferMoneda');
-    selectTransfer.innerHTML = '';
-    Object.keys(exchangeRatesUSD).forEach(m => {
-        if (m !== currentData.monedaBase) {
-            const opt = document.createElement('option');
-            opt.value = m;
-            opt.textContent = m.toUpperCase();
-            selectTransfer.appendChild(opt);
-        }
-    });
+    const disponibles = Object.keys(exchangeRatesUSD)
+        .filter(m => m !== currentData.monedaBase)
+        .sort((a, b) => getAssetTicker(a).localeCompare(getAssetTicker(b)));
+
+    const armarOptions = (esCripto) => disponibles
+        .filter(m => isAssetCripto(m) === esCripto)
+        .map(m => `<option value="${m}">${getAssetTicker(m)}</option>`)
+        .join('');
+
+    selectTransfer.innerHTML =
+        `<optgroup label="Monedas">${armarOptions(false)}</optgroup>` +
+        `<optgroup label="Criptomonedas">${armarOptions(true)}</optgroup>`;
+
     calcularImpacto();
     updateDashboard();
 }

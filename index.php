@@ -336,10 +336,28 @@
                 </div>
                 <div class="form-group">
                     <label>Categoría</label>
-                    <input type="text" id="catGasto" list="sugerenciasCat" placeholder="Selecciona o escribe...">
-                    <datalist id="sugerenciasCat">
-                        <option value="Comida"><option value="Transporte"><option value="Servicios"><option value="Ocio"><option value="Salud">
-                    </datalist>
+                    <select id="catGasto">
+                        <option value="Comida">Comida</option>
+                        <option value="Transporte">Transporte</option>
+                        <option value="Servicios">Servicios</option>
+                        <option value="Ocio">Ocio</option>
+                        <option value="Salud">Salud</option>
+                        <option value="Educación">Educación</option>
+                        <option value="Ropa">Ropa</option>
+                        <option value="Hogar">Hogar</option>
+                        <option value="Mascotas">Mascotas</option>
+                        <option value="Regalos">Regalos</option>
+                        <option value="Impuestos">Impuestos</option>
+                        <option value="Seguros">Seguros</option>
+                        <option value="Suscripciones">Suscripciones</option>
+                        <option value="Tecnología">Tecnología</option>
+                        <option value="Belleza">Belleza</option>
+                        <option value="Deporte">Deporte</option>
+                        <option value="Viajes">Viajes</option>
+                        <option value="Alquiler">Alquiler</option>
+                        <option value="Inversión">Inversión</option>
+                        <option value="Varios">Varios</option>
+                    </select>
                 </div>
                 <div class="form-group">
                     <label>Fecha</label>
@@ -453,10 +471,29 @@
                 <div class="form-group">
                     <label>Ver mis Ahorros en:</label>
                     <select id="configMonedaVisual">
-                        <option value="usd">Dólares (USD) - Recomendado</option>
-                        <option value="ars">Pesos Argentinos (ARS)</option>
-                        <option value="eur">Euros (EUR)</option>
-                        <option value="bitcoin">Bitcoin (BTC)</option>
+                        <optgroup label="Monedas">
+                            <option value="usd">Dólar (USD) - Recomendado</option>
+                            <option value="ars">Peso Argentino (ARS)</option>
+                            <option value="eur">Euro (EUR)</option>
+                            <option value="uyu">Peso Uruguayo (UYU)</option>
+                            <option value="brl">Real Brasileño (BRL)</option>
+                            <option value="clp">Peso Chileno (CLP)</option>
+                            <option value="cop">Peso Colombiano (COP)</option>
+                            <option value="mxn">Peso Mexicano (MXN)</option>
+                            <option value="pen">Sol Peruano (PEN)</option>
+                            <option value="gbp">Libra Esterlina (GBP)</option>
+                        </optgroup>
+                        <optgroup label="Criptomonedas">
+                            <option value="bitcoin">Bitcoin (BTC)</option>
+                            <option value="ethereum">Ethereum (ETH)</option>
+                            <option value="tether">Tether (USDT)</option>
+                            <option value="bnb">BNB (BNB)</option>
+                            <option value="cardano">Cardano (ADA)</option>
+                            <option value="litecoin">Litecoin (LTC)</option>
+                            <option value="polkadot">Polkadot (DOT)</option>
+                            <option value="solana">Solana (SOL)</option>
+                            <option value="xrp">XRP (XRP)</option>
+                        </optgroup>
                     </select>
                     <small style="color:#94a3b8;">Ej: Gano en Pesos, pero quiero ver cuánto tengo en Dólares.</small>
                 </div>
@@ -468,14 +505,9 @@
                     <div id="panelSaldosManuales" style="background:rgba(0,0,0,0.2); padding:10px; border-radius:8px; margin-bottom:10px;"></div>
                     
                     <div style="display:flex; gap:5px;">
+                        <!-- Opciones generadas dinámicamente por populateSelectNuevaMoneda() con todo el catálogo de activos -->
                         <select id="selectNuevaMoneda" style="margin:0; font-size:0.9rem;">
                             <option value="">+ Agregar otro activo...</option>
-                            <option value="usd">Dólar (USD)</option>
-                            <option value="eur">Euro (EUR)</option>
-                            <option value="bitcoin">Bitcoin (BTC)</option>
-                            <option value="ethereum">Ethereum (ETH)</option>
-                            <option value="tether">USDT</option>
-                            <option value="uyu">Peso Uruguayo (UYU)</option>
                         </select>
                         <button onclick="agregarMonedaManual()" class="btn-secondary" style="padding: 0 15px;">+</button>
                     </div>
