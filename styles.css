@@ -115,6 +115,7 @@ select optgroup {
 .app-header, .controls-bar, .dashboard-grid, .transactions-container { width: 100%; }
 .app-header { padding: 15px 25px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; }
 .header-left { display: flex; align-items: center; gap: 12px; font-weight: 600; }
+.donate-container { display: flex; justify-content: center; margin-bottom: 20px; }
 .controls-bar { padding: 15px; margin-bottom: 20px; display: flex; gap: 15px; align-items: center; }
 
 /* DASHBOARD GRID */
@@ -602,6 +603,8 @@ select optgroup {
 }
 
 @media (max-width: 500px) {
+    .donate-container { margin-bottom: 12px; }
+
     /* Borde fijo de 10px en todos lados */
     body {
         padding: 10px !important;

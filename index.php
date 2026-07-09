@@ -246,7 +246,7 @@
             </button>
         </header>
 
-        <div style="display:flex; justify-content:center; margin-bottom:20px;">
+        <div class="donate-container">
             <script type='text/javascript' src='https://storage.ko-fi.com/cdn/widget/Widget_2.js'></script><script type='text/javascript'>kofiwidget2.init('Invítame un café', '#1a2640', 'O2F322PEJJ');kofiwidget2.draw();</script>
         </div>
 
