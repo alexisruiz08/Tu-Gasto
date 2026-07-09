@@ -241,6 +241,9 @@
                 <img src="tugasto.png" alt="TuGasto.com" width="25" height="25">
                 <span id="welcomeText">Hola, Usuario</span>
             </div>
+            <div class="header-donate">
+                <script type='text/javascript' src='https://storage.ko-fi.com/cdn/widget/Widget_2.js'></script><script type='text/javascript'>kofiwidget2.init('Invítame un café', '#1a2640', 'O2F322PEJJ');kofiwidget2.draw();</script>
+            </div>
             <button class="btn-text logout-btn" onclick="logout()">
                 <i data-lucide="log-out"></i> Salir
             </button>

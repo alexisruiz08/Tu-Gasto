@@ -113,8 +113,12 @@ select optgroup {
 /* --- LAYOUT --- */
 /* Todos los paneles ocupan el 100% de mainContent (que ya tiene max-width) */
 .app-header, .controls-bar, .dashboard-grid, .transactions-container { width: 100%; }
-.app-header { padding: 15px 25px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; }
-.header-left { display: flex; align-items: center; gap: 12px; font-weight: 600; }
+.app-header { padding: 15px 25px; margin-bottom: 20px; display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; row-gap: 10px; }
+.header-left { display: flex; align-items: center; gap: 12px; font-weight: 600; order: 1; }
+/* En pantallas anchas queda centrado entre el nombre y "Salir"; en angostas
+   (ver media query) pasa a su propia fila para no apretar el header */
+.header-donate { order: 2; display: flex; justify-content: center; flex: 1; }
+.logout-btn { order: 3; }
 .controls-bar { padding: 15px; margin-bottom: 20px; display: flex; gap: 15px; align-items: center; }
 
 /* DASHBOARD GRID */
@@ -578,6 +582,12 @@ select optgroup {
     .feature-list li { justify-content: flex-start; text-align: left; }
     .dashboard-grid { grid-template-columns: 1fr; }
     .controls-bar { flex-direction: column; gap: 10px; }
+
+    /* Header angosto: nombre + Salir se quedan arriba juntos, el botón de
+       donación pasa a su propia fila centrada debajo (flex-basis:100% fuerza
+       el salto de línea) en vez de apretarse los tres en la misma fila */
+    .logout-btn { order: 2; }
+    .header-donate { order: 3; flex-basis: 100%; }
     .modern-table th:nth-child(1), .modern-table th:nth-child(3) { display: none; }
     .modern-table td:nth-child(1), .modern-table td:nth-child(3) { display: none; }
     .modern-table th, .modern-table td { font-size: 0.9rem; padding: 10px; }
