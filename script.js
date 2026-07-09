@@ -7,6 +7,7 @@ const GOOGLE_CLIENT_ID = "875118863427-50nipitrr9qjiancdru831bkeoa0krmn.apps.goo
 const DEFAULT_SHEET_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRcJ627hJGrJiOiHfAJyNZQWczsff_8InNB2i1B4dqqYfXBG-uKmhFbi3Mtc39biuaEjylIRJ6TFNf3/pub?gid=0&single=true&output=csv";
 
 let currentUser = null;
+let isAdmin = false; // solo lo confirma el servidor (check_session/google_login), nunca se asume en el cliente
 
 // ESTRUCTURA DE DATOS
 let currentData = {
@@ -215,6 +216,8 @@ async function checkSession() {
         const data = await res.json();
         if (data.status === 'logged_in') {
             currentUser = data.username;
+            isAdmin = data.is_admin === true;
+            updateAdminUI();
             document.getElementById('landingLayout').style.display = 'none';
             document.getElementById('mainContent').style.display = 'block';
             if(window.startParticles) window.startParticles();
@@ -1399,6 +1402,48 @@ async function enviarFeedback() {
     } finally {
         btn.disabled = false;
         btn.textContent = 'Enviar sugerencia';
+    }
+}
+
+// --- PANEL DE SUGERENCIAS (solo admin) ---
+// Muestra/oculta el botón según lo que confirmó el servidor. El botón oculto
+// es solo estética: quien intente llamar a get_feedback sin ser admin recibe
+// un 403 igual, la seguridad real está en api.php.
+function updateAdminUI() {
+    const btn = document.getElementById('btnAdminFeedback');
+    if (btn) btn.style.display = isAdmin ? 'flex' : 'none';
+}
+
+async function openAdminFeedbackModal() {
+    const cont = document.getElementById('adminFeedbackLista');
+    cont.innerHTML = '<small style="color:#94a3b8;">Cargando...</small>';
+    openModal('modalAdminFeedback');
+
+    try {
+        const res = await fetch(`${API_URL}?action=get_feedback`);
+        const data = await res.json();
+
+        if (data.status !== 'success') {
+            cont.innerHTML = `<small style="color:#94a3b8;">${escapeHtml(data.message || 'Error al cargar')}</small>`;
+            return;
+        }
+
+        if (data.data.length === 0) {
+            cont.innerHTML = '<small style="color:#94a3b8;">Todavía no llegó ninguna sugerencia.</small>';
+            return;
+        }
+
+        cont.innerHTML = data.data.map(item => `
+            <div class="admin-feedback-item">
+                <div class="admin-feedback-item-header">
+                    <span>${escapeHtml(item.username)}</span>
+                    <span>${escapeHtml(item.fecha)}</span>
+                </div>
+                <div class="admin-feedback-item-mensaje">${escapeHtml(item.mensaje)}</div>
+            </div>
+        `).join('');
+    } catch (e) {
+        cont.innerHTML = '<small style="color:#94a3b8;">Error de conexión.</small>';
     }
 }
 

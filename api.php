@@ -22,6 +22,7 @@ $user    = $config['db']['user'];
 $pass    = $config['db']['pass'];
 $charset = $config['db']['charset'];
 $GOOGLE_CLIENT_ID = $config['google_client_id'];
+$ADMIN_EMAIL = $config['admin_email'];
 
 $dsn = "mysql:host=$host;dbname=$db;charset=$charset";
 $options = [
@@ -164,8 +165,11 @@ if ($action === 'google_login') {
         
         // 3. Iniciar sesión
         $_SESSION['user_id'] = $user['id'];
-        $_SESSION['username'] = $displayUsername; 
-        
+        $_SESSION['username'] = $displayUsername;
+        // Solo esta cuenta de Google exacta (validada por el token, no por el
+        // username que eligió el usuario) tiene acceso al panel de sugerencias
+        $_SESSION['is_admin'] = ($email === $ADMIN_EMAIL);
+
         echo json_encode(['status' => 'success', 'username' => $displayUsername]);
 
     } else {
@@ -178,7 +182,11 @@ if ($action === 'google_login') {
 // --- VERIFICAR SESIÓN ---
 if ($action === 'check_session') {
     if (isset($_SESSION['user_id'])) {
-        echo json_encode(['status' => 'logged_in', 'username' => $_SESSION['username']]); 
+        echo json_encode([
+            'status' => 'logged_in',
+            'username' => $_SESSION['username'],
+            'is_admin' => !empty($_SESSION['is_admin']),
+        ]);
     } else {
         echo json_encode(['status' => 'logged_out']);
     }
@@ -192,6 +200,15 @@ if ($action === 'register') {
 
     if (empty($username) || empty($password)) {
         echo json_encode(['status' => 'error', 'message' => 'Faltan datos']);
+        exit;
+    }
+
+    // Los usuarios de Google se identifican internamente por su email completo;
+    // si dejáramos registrar una cuenta local con un username en formato email,
+    // alguien podría "ocupar" de antemano el email de otra persona (por ejemplo
+    // el del admin) y terminar compartiendo esa misma cuenta al iniciar con Google.
+    if (filter_var($username, FILTER_VALIDATE_EMAIL)) {
+        echo json_encode(['status' => 'error', 'message' => 'El usuario no puede tener formato de email']);
         exit;
     }
 
@@ -215,6 +232,7 @@ if ($action === 'register') {
     if ($stmt->execute([$username, $hash])) {
         $_SESSION['user_id'] = $pdo->lastInsertId();
         $_SESSION['username'] = $username;
+        $_SESSION['is_admin'] = false; // el panel de sugerencias solo es accesible vía Google
         echo json_encode(['status' => 'success']);
     } else {
         echo json_encode(['status' => 'error', 'message' => 'Error al registrar']);
@@ -241,6 +259,7 @@ if ($action === 'login') {
         clearRateLimit($pdo, 'login:' . $clientIp);
         $_SESSION['user_id'] = $user['id'];
         $_SESSION['username'] = $user['username'];
+        $_SESSION['is_admin'] = false; // el panel de sugerencias solo es accesible vía Google
         echo json_encode(['status' => 'success']);
     } else {
         registerFailedAttempt($pdo, 'login:' . $clientIp);
@@ -386,6 +405,36 @@ if ($action === 'submit_feedback') {
     $stmt = $pdo->prepare("INSERT INTO feedback (user_id, username, mensaje) VALUES (?, ?, ?)");
     $stmt->execute([$_SESSION['user_id'], $_SESSION['username'], $mensaje]);
     echo json_encode(['status' => 'success']);
+    exit;
+}
+
+// Panel de sugerencias: SOLO accesible para la cuenta de Google marcada como
+// admin en config.php. Esta es la barrera real; ocultar el botón en el
+// frontend es solo cosmético, esto es lo que efectivamente bloquea el acceso.
+if ($action === 'get_feedback') {
+    if (empty($_SESSION['is_admin'])) {
+        http_response_code(403);
+        echo json_encode(['status' => 'error', 'message' => 'No autorizado']);
+        exit;
+    }
+
+    if (isApiRateLimited($pdo, 'get_feedback:' . $_SESSION['user_id'])) {
+        http_response_code(429);
+        echo json_encode(['status' => 'error', 'message' => 'Demasiadas solicitudes. Espera un momento.']);
+        exit;
+    }
+
+    $pdo->exec("CREATE TABLE IF NOT EXISTS feedback (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        user_id INT NOT NULL,
+        username VARCHAR(191) NOT NULL,
+        mensaje TEXT NOT NULL,
+        fecha DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+    ) ENGINE=InnoDB");
+
+    $stmt = $pdo->query("SELECT username, mensaje, fecha FROM feedback ORDER BY fecha DESC LIMIT 200");
+    $rows = $stmt->fetchAll();
+    echo json_encode(['status' => 'success', 'data' => $rows]);
     exit;
 }
 

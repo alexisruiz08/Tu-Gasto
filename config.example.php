@@ -13,6 +13,9 @@ return [
     ],
     'google_client_id' => 'tu-client-id.apps.googleusercontent.com',
 
+    // Único email con acceso al panel de sugerencias (solo vía Google Sign-In)
+    'admin_email' => 'tu-email@gmail.com',
+
     // Clave secreta para poder ejecutar backup.php via HTTP (cron externo).
     'backup_secret' => 'CAMBIAR_ESTA_CLAVE_POR_UNA_LARGA_Y_UNICA',
 ];

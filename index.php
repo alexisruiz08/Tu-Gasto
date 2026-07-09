@@ -248,6 +248,10 @@
 
         <div class="donate-container">
             <div class="donate-inner">
+                <!-- Solo visible para la cuenta admin (ver checkSession/updateAdminUI en script.js) -->
+                <button id="btnAdminFeedback" class="feedback-btn admin-feedback-btn" onclick="openAdminFeedbackModal()" title="Ver sugerencias" aria-label="Ver sugerencias" style="display:none;">
+                    <i data-lucide="inbox"></i>
+                </button>
                 <script type='text/javascript' src='https://storage.ko-fi.com/cdn/widget/Widget_2.js'></script><script type='text/javascript'>kofiwidget2.init('Invítame un café', '#1a2640', 'O2F322PEJJ');kofiwidget2.draw();</script>
                 <button class="feedback-btn" onclick="openModal('modalFeedback')" title="Sugerir una mejora" aria-label="Sugerir una mejora">
                     <i data-lucide="lightbulb"></i>
@@ -690,6 +694,19 @@
                     <textarea id="feedbackMensaje" rows="5" maxlength="2000" placeholder="Contanos tu idea..."></textarea>
                 </div>
                 <button id="btnEnviarFeedback" onclick="enviarFeedback()" class="btn-primary full-width">Enviar sugerencia</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL: Panel de sugerencias (solo admin) -->
+    <div id="modalAdminFeedback" class="modal-overlay">
+        <div class="modal-card modal-card-wide">
+            <div class="modal-header">
+                <h3>Sugerencias Recibidas</h3>
+                <button onclick="closeModal('modalAdminFeedback')" class="close-btn" aria-label="Cerrar"><i data-lucide="x"></i></button>
+            </div>
+            <div class="modal-body">
+                <div id="adminFeedbackLista" class="admin-feedback-lista"></div>
             </div>
         </div>
     </div>

@@ -144,6 +144,9 @@ select optgroup {
 }
 .feedback-btn:hover { background: rgba(255, 255, 255, 0.12); color: #facc15; }
 .feedback-btn i { width: 16px; height: 16px; }
+/* Botón de admin: mismo estilo que feedback-btn pero espejado a la izquierda */
+.admin-feedback-btn { left: auto; right: 100%; margin-left: 0; margin-right: 10px; }
+.admin-feedback-btn:hover { color: var(--primary); }
 .controls-bar { padding: 15px; margin-bottom: 20px; display: flex; gap: 15px; align-items: center; }
 
 /* DASHBOARD GRID */
@@ -711,6 +714,12 @@ select optgroup {
 .detalle-row strong { color: var(--text-main); text-align: right; }
 .detalle-gasto-pagos { display: flex; flex-direction: column; gap: 6px; max-height: 160px; overflow-y: auto; }
 .detalle-pago-row { display: flex; justify-content: space-between; font-size: 0.85rem; padding: 8px 10px; background: rgba(16, 185, 129, 0.08); border-radius: 8px; color: var(--text-main); }
+
+/* --- PANEL DE SUGERENCIAS (admin) --- */
+.admin-feedback-lista { display: flex; flex-direction: column; gap: 10px; max-height: 60vh; overflow-y: auto; }
+.admin-feedback-item { background: rgba(255,255,255,0.04); border-radius: 10px; padding: 12px 14px; }
+.admin-feedback-item-header { display: flex; justify-content: space-between; font-size: 0.75rem; color: var(--text-muted); margin-bottom: 6px; }
+.admin-feedback-item-mensaje { color: var(--text-main); font-size: 0.9rem; white-space: pre-wrap; word-break: break-word; }
 
 /* --- PÁGINAS LEGALES (terminos.php / privacidad.php) --- */
 .legal-content h3 { margin-top: 22px; margin-bottom: 8px; font-size: 1.05rem; color: var(--text-main); }
