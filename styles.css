@@ -661,13 +661,18 @@ select optgroup {
 .reporte-cat-barra-bg { width: 100%; height: 8px; border-radius: 4px; background: rgba(255,255,255,0.08); overflow: hidden; }
 .reporte-cat-barra { height: 100%; border-radius: 4px; background: var(--primary); transition: width 0.3s ease; }
 .reporte-cat-barra.over-budget { background: var(--danger); }
-.reporte-cat-presupuesto { display: flex; align-items: center; gap: 8px; font-size: 0.8rem; color: var(--text-muted); }
-.reporte-cat-presupuesto input { margin-bottom: 0; padding: 6px 8px; width: 110px; font-size: 0.8rem; }
 
 .reportes-historial { display: flex; align-items: flex-end; gap: 8px; height: 140px; margin-top: 10px; padding-top: 10px; }
 .historial-mes-col { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; height: 100%; gap: 6px; }
 .historial-mes-barra { width: 100%; max-width: 28px; border-radius: 4px 4px 0 0; background: var(--secondary); min-height: 2px; }
 .historial-mes-barra.negativo { background: var(--danger); }
+
+/* Editor de presupuestos (modal de Ingresos): lista con scroll, ya que son
+   las 20 categorías fijas completas, no solo las que tienen gasto este mes */
+.presupuestos-editor { display: flex; flex-direction: column; gap: 6px; max-height: 260px; overflow-y: auto; padding-right: 4px; }
+.presupuesto-edit-row { display: flex; align-items: center; gap: 10px; }
+.presupuesto-edit-row label { width: 130px; flex-shrink: 0; margin: 0; font-size: 0.85rem; color: var(--text-muted); }
+.presupuesto-edit-row input { margin: 0; padding: 8px 10px; font-size: 0.85rem; }
 .historial-mes-label { font-size: 0.65rem; color: var(--text-muted); white-space: nowrap; }
 
 /* --- DETALLE DE GASTO --- */

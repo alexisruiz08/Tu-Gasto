@@ -1387,6 +1387,7 @@ function openModal(id) {
     if (id === 'modalIngresos') {
         document.getElementById('ingresoFijo').value = currentData.ingresos.fijo || '';
         document.getElementById('ingresoExtra').value = currentData.ingresos.extra || '';
+        renderPresupuestosEditor();
     }
     if (id === 'modalGasto' && document.getElementById('tituloModalGasto').textContent !== "Editar Gasto") {
         document.getElementById('descGasto').value = '';
@@ -1602,6 +1603,9 @@ function openReportesModal() {
     openModal('modalReportes');
 }
 
+// Solo muestra el gasto por categoría con su barra (comparada contra el
+// presupuesto si hay uno definido). Editar el presupuesto en sí se hace desde
+// el modal de Ingresos, no acá.
 function renderReportesCategorias() {
     const cont = document.getElementById('reportesCategorias');
     if (!cont) return;
@@ -1628,10 +1632,31 @@ function renderReportesCategorias() {
                 <div class="reporte-cat-barra-bg">
                     <div class="reporte-cat-barra ${sobrePresupuesto ? 'over-budget' : ''}" style="width:${pctBarra}%;"></div>
                 </div>
-                <div class="reporte-cat-presupuesto">
-                    <span>Presupuesto mensual:</span>
-                    <input type="number" class="input-presupuesto" data-categoria="${escapeHtml(categoria)}" value="${presupuesto || ''}" placeholder="Sin límite" step="any" min="0">
-                </div>
+            </div>
+        `;
+    }).join('');
+}
+
+// Categorías fijas de gasto, tomadas del <select> de Nuevo Gasto (única fuente de verdad)
+function getCategoriasFijas() {
+    const select = document.getElementById('catGasto');
+    if (!select) return [];
+    return Array.from(select.options).map(opt => opt.value).filter(Boolean);
+}
+
+// Lista editable de presupuestos por categoría, dentro del modal de Ingresos.
+// A diferencia del breakdown de Reportes, acá aparecen las 20 categorías fijas
+// aunque todavía no tengan gastos cargados este mes.
+function renderPresupuestosEditor() {
+    const cont = document.getElementById('presupuestosEditor');
+    if (!cont) return;
+
+    cont.innerHTML = getCategoriasFijas().map(categoria => {
+        const presupuesto = parseFloat(currentData.presupuestos[categoria]) || '';
+        return `
+            <div class="presupuesto-edit-row">
+                <label>${escapeHtml(categoria)}</label>
+                <input type="number" class="input-presupuesto" data-categoria="${escapeHtml(categoria)}" value="${presupuesto}" placeholder="Sin límite" step="any" min="0">
             </div>
         `;
     }).join('');
@@ -1649,7 +1674,7 @@ function guardarPresupuestos() {
     });
     presupuestosAvisados.clear(); // si cambiaron los límites, vuelve a avisar si corresponde
     saveData();
-    renderReportesCategorias();
+    renderPresupuestosEditor();
     showNotification("Presupuestos guardados");
 }
 

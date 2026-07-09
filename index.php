@@ -276,7 +276,7 @@
                 </div>
                 <div class="card-value" id="displayAhorroTotal">$0</div>
                 
-                <div class="card-subtext" id="displayDetalleAhorros" style="font-size: 0.8rem; min-height: 20px; white-space: pre-wrap; margin-bottom: 5px;">
+                <div class="card-subtext" id="displayDetalleAhorros" style="font-size: 0.8rem; min-height: 20px; white-space: pre-wrap; margin-bottom: 10px;">
                     Calculando...
                 </div>
                 
@@ -419,7 +419,7 @@
 
     <!-- MODAL: Ingresos -->
     <div id="modalIngresos" class="modal-overlay">
-        <div class="modal-card">
+        <div class="modal-card modal-card-wide">
             <div class="modal-header">
                 <h3>Ingresos del Mes</h3>
                 <button onclick="closeModal('modalIngresos')" class="close-btn" aria-label="Cerrar"><i data-lucide="x"></i></button>
@@ -435,6 +435,15 @@
                     <input type="number" id="ingresoExtra" placeholder="0.00">
                 </div>
                 <button id="btnGuardarIngresos" class="btn-primary full-width">Actualizar Ingresos</button>
+
+                <hr style="border:0; border-top:1px solid var(--glass-border); margin:20px 0;">
+
+                <div class="form-group" style="margin-bottom:0;">
+                    <label>Presupuestos Mensuales por Categoría</label>
+                    <small style="color:#94a3b8; display:block; margin-bottom:10px;">Dejá el campo vacío para no ponerle límite a esa categoría.</small>
+                    <div id="presupuestosEditor" class="presupuestos-editor"></div>
+                    <button onclick="guardarPresupuestos()" class="btn-primary full-width" style="margin-top:12px;">Guardar Presupuestos</button>
+                </div>
             </div>
         </div>
     </div>
@@ -606,14 +615,14 @@
     <div id="modalReportes" class="modal-overlay">
         <div class="modal-card modal-card-wide">
             <div class="modal-header">
-                <h3>Reportes y Presupuestos</h3>
+                <h3>Reportes</h3>
                 <button onclick="closeModal('modalReportes')" class="close-btn" aria-label="Cerrar"><i data-lucide="x"></i></button>
             </div>
             <div class="modal-body">
                 <div class="form-group">
-                    <label>Gastos por Categoría (mes actual) y presupuesto mensual</label>
+                    <label>Gastos por Categoría (mes actual)</label>
                     <div id="reportesCategorias" class="reportes-categorias"></div>
-                    <button onclick="guardarPresupuestos()" class="btn-primary full-width" style="margin-top:10px;">Guardar Presupuestos</button>
+                    <small style="color:#94a3b8; display:block; margin-top:8px;">Los presupuestos se editan desde "Editar Ingresos".</small>
                 </div>
 
                 <hr style="border:0; border-top:1px solid var(--glass-border); margin:20px 0;">
