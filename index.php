@@ -251,6 +251,7 @@
                 <!-- Solo visible para la cuenta admin (ver checkSession/updateAdminUI en script.js) -->
                 <button id="btnAdminFeedback" class="feedback-btn admin-feedback-btn" onclick="openAdminFeedbackModal()" title="Ver sugerencias" aria-label="Ver sugerencias" style="display:none;">
                     <i data-lucide="inbox"></i>
+                    <span id="adminFeedbackDot" class="notif-dot" style="display:none;"></span>
                 </button>
                 <script type='text/javascript' src='https://storage.ko-fi.com/cdn/widget/Widget_2.js'></script><script type='text/javascript'>kofiwidget2.init('Invítame un café', '#1a2640', 'O2F322PEJJ');kofiwidget2.draw();</script>
                 <button class="feedback-btn" onclick="openModal('modalFeedback')" title="Sugerir una mejora" aria-label="Sugerir una mejora">

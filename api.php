@@ -97,6 +97,38 @@ function isApiRateLimited(PDO $pdo, string $identifier): bool {
 // Identificador para el límite: IP (evita que un atacante pruebe usuarios ilimitados desde la misma IP)
 $clientIp = $_SERVER['REMOTE_ADDR'] ?? 'unknown';
 
+// --- PANEL DE SUGERENCIAS (admin): tablas + conteo de no leídas ---
+function ensureFeedbackTables(PDO $pdo): void {
+    $pdo->exec("CREATE TABLE IF NOT EXISTS feedback (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        user_id INT NOT NULL,
+        username VARCHAR(191) NOT NULL,
+        mensaje TEXT NOT NULL,
+        fecha DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+    ) ENGINE=InnoDB");
+    $pdo->exec("CREATE TABLE IF NOT EXISTS admin_meta (
+        meta_key VARCHAR(64) PRIMARY KEY,
+        meta_value VARCHAR(255) NOT NULL
+    ) ENGINE=InnoDB");
+}
+
+// Cuenta sugerencias mas nuevas que la ultima vez que el admin abrio el panel.
+// Si nunca lo abrio, cuenta todo lo que haya.
+function getUnreadFeedbackCount(PDO $pdo): int {
+    ensureFeedbackTables($pdo);
+    $stmt = $pdo->prepare("SELECT meta_value FROM admin_meta WHERE meta_key = 'last_seen_feedback'");
+    $stmt->execute();
+    $lastSeen = $stmt->fetchColumn();
+
+    if ($lastSeen === false) {
+        $stmt = $pdo->query("SELECT COUNT(*) FROM feedback");
+    } else {
+        $stmt = $pdo->prepare("SELECT COUNT(*) FROM feedback WHERE fecha > ?");
+        $stmt->execute([$lastSeen]);
+    }
+    return (int) $stmt->fetchColumn();
+}
+
 // Obtener la acción (GET o POST)
 $action = $_GET['action'] ?? $_POST['action'] ?? '';
 
@@ -182,10 +214,12 @@ if ($action === 'google_login') {
 // --- VERIFICAR SESIÓN ---
 if ($action === 'check_session') {
     if (isset($_SESSION['user_id'])) {
+        $sessionIsAdmin = !empty($_SESSION['is_admin']);
         echo json_encode([
             'status' => 'logged_in',
             'username' => $_SESSION['username'],
-            'is_admin' => !empty($_SESSION['is_admin']),
+            'is_admin' => $sessionIsAdmin,
+            'unread_feedback' => $sessionIsAdmin ? getUnreadFeedbackCount($pdo) : 0,
         ]);
     } else {
         echo json_encode(['status' => 'logged_out']);
@@ -394,13 +428,7 @@ if ($action === 'submit_feedback') {
         exit;
     }
 
-    $pdo->exec("CREATE TABLE IF NOT EXISTS feedback (
-        id INT AUTO_INCREMENT PRIMARY KEY,
-        user_id INT NOT NULL,
-        username VARCHAR(191) NOT NULL,
-        mensaje TEXT NOT NULL,
-        fecha DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
-    ) ENGINE=InnoDB");
+    ensureFeedbackTables($pdo);
 
     $stmt = $pdo->prepare("INSERT INTO feedback (user_id, username, mensaje) VALUES (?, ?, ?)");
     $stmt->execute([$_SESSION['user_id'], $_SESSION['username'], $mensaje]);
@@ -424,17 +452,31 @@ if ($action === 'get_feedback') {
         exit;
     }
 
-    $pdo->exec("CREATE TABLE IF NOT EXISTS feedback (
-        id INT AUTO_INCREMENT PRIMARY KEY,
-        user_id INT NOT NULL,
-        username VARCHAR(191) NOT NULL,
-        mensaje TEXT NOT NULL,
-        fecha DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
-    ) ENGINE=InnoDB");
+    ensureFeedbackTables($pdo);
 
     $stmt = $pdo->query("SELECT username, mensaje, fecha FROM feedback ORDER BY fecha DESC LIMIT 200");
     $rows = $stmt->fetchAll();
     echo json_encode(['status' => 'success', 'data' => $rows]);
+    exit;
+}
+
+// El admin marca las sugerencias como vistas (apaga el puntito rojo). Guarda
+// el momento actual; la próxima vez solo se cuentan como "nuevas" las que
+// lleguen después de este instante.
+if ($action === 'mark_feedback_seen') {
+    if (empty($_SESSION['is_admin'])) {
+        http_response_code(403);
+        echo json_encode(['status' => 'error', 'message' => 'No autorizado']);
+        exit;
+    }
+
+    ensureFeedbackTables($pdo);
+    $stmt = $pdo->prepare("
+        INSERT INTO admin_meta (meta_key, meta_value) VALUES ('last_seen_feedback', NOW())
+        ON DUPLICATE KEY UPDATE meta_value = NOW()
+    ");
+    $stmt->execute();
+    echo json_encode(['status' => 'success']);
     exit;
 }
 

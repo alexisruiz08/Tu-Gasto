@@ -147,6 +147,18 @@ select optgroup {
 /* Botón de admin: mismo estilo que feedback-btn pero espejado a la izquierda */
 .admin-feedback-btn { left: auto; right: 100%; margin-left: 0; margin-right: 10px; }
 .admin-feedback-btn:hover { color: var(--primary); }
+/* Puntito de "hay sugerencias sin leer": el botón ya es position:absolute,
+   así que esto se ancla directo a su esquina sin necesitar un wrapper extra */
+.notif-dot {
+    position: absolute;
+    top: -2px;
+    right: -2px;
+    width: 9px;
+    height: 9px;
+    border-radius: 50%;
+    background: var(--danger);
+    border: 2px solid var(--dark-bg);
+}
 .controls-bar { padding: 15px; margin-bottom: 20px; display: flex; gap: 15px; align-items: center; }
 
 /* DASHBOARD GRID */

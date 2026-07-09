@@ -8,6 +8,7 @@ const DEFAULT_SHEET_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRcJ6
 
 let currentUser = null;
 let isAdmin = false; // solo lo confirma el servidor (check_session/google_login), nunca se asume en el cliente
+let unreadFeedbackCount = 0;
 
 // ESTRUCTURA DE DATOS
 let currentData = {
@@ -217,6 +218,7 @@ async function checkSession() {
         if (data.status === 'logged_in') {
             currentUser = data.username;
             isAdmin = data.is_admin === true;
+            unreadFeedbackCount = data.unread_feedback || 0;
             updateAdminUI();
             document.getElementById('landingLayout').style.display = 'none';
             document.getElementById('mainContent').style.display = 'block';
@@ -1412,6 +1414,9 @@ async function enviarFeedback() {
 function updateAdminUI() {
     const btn = document.getElementById('btnAdminFeedback');
     if (btn) btn.style.display = isAdmin ? 'flex' : 'none';
+
+    const dot = document.getElementById('adminFeedbackDot');
+    if (dot) dot.style.display = (isAdmin && unreadFeedbackCount > 0) ? 'block' : 'none';
 }
 
 async function openAdminFeedbackModal() {
@@ -1430,18 +1435,22 @@ async function openAdminFeedbackModal() {
 
         if (data.data.length === 0) {
             cont.innerHTML = '<small style="color:#94a3b8;">Todavía no llegó ninguna sugerencia.</small>';
-            return;
+        } else {
+            cont.innerHTML = data.data.map(item => `
+                <div class="admin-feedback-item">
+                    <div class="admin-feedback-item-header">
+                        <span>${escapeHtml(item.username)}</span>
+                        <span>${escapeHtml(item.fecha)}</span>
+                    </div>
+                    <div class="admin-feedback-item-mensaje">${escapeHtml(item.mensaje)}</div>
+                </div>
+            `).join('');
         }
 
-        cont.innerHTML = data.data.map(item => `
-            <div class="admin-feedback-item">
-                <div class="admin-feedback-item-header">
-                    <span>${escapeHtml(item.username)}</span>
-                    <span>${escapeHtml(item.fecha)}</span>
-                </div>
-                <div class="admin-feedback-item-mensaje">${escapeHtml(item.mensaje)}</div>
-            </div>
-        `).join('');
+        // Apaga el puntito rojo: a partir de ahora ya las viste
+        unreadFeedbackCount = 0;
+        updateAdminUI();
+        fetch(`${API_URL}?action=mark_feedback_seen`);
     } catch (e) {
         cont.innerHTML = '<small style="color:#94a3b8;">Error de conexión.</small>';
     }
