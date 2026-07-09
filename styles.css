@@ -168,7 +168,6 @@ select optgroup {
 }
 .modal-card {
     background: #1a2640;
-    border: 1px solid rgba(255,255,255,0.1);
     border-radius: 20px;
     padding: 28px;
     width: 90%;
@@ -389,7 +388,7 @@ select optgroup {
 .btn-delete { color: var(--danger); background-color: rgba(239, 68, 68, 0.15); }
 .btn-pay { color: var(--secondary); background-color: rgba(16, 185, 129, 0.15); }
 .btn-paid { color: var(--text-muted); background-color: rgba(148, 163, 184, 0.1); cursor: default; }
-.date-selector-control { display: flex; align-items: center; gap: 10px; background: var(--glass-bg); border: 1px solid var(--glass-border); border-radius: 12px; padding: 5px; margin-bottom: 10px; justify-content: space-between; width: 100%; margin-top: 10px; }
+.date-selector-control { display: flex; align-items: center; gap: 10px; background: var(--glass-bg); border-radius: 12px; padding: 5px; margin-bottom: 10px; justify-content: space-between; width: 100%; margin-top: 10px; }
 .month-display { font-weight: 600; color: var(--text-main); text-align: center; flex: 1; white-space: nowrap; font-size: clamp(0.9rem, 4vw, 1.1rem); }
 .date-selector-control .btn-icon-only { width: 30px; height: 30px; color: var(--primary); background: transparent; }
 
