@@ -304,7 +304,7 @@
                     <span id="displayBalanceMes">$0</span>
                 </div>
                 <div class="actions-row">
-                    <button onclick="openModal('modalIngresos')" class="btn-secondary btn-sm full-width">
+                    <button onclick="openModal('modalIngresos')" class="btn-sm btn-white full-width">
                         <i data-lucide="pencil"></i> Editar Ingresos
                     </button>
                 </div>
