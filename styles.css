@@ -371,6 +371,9 @@ select optgroup {
 .btn-undo:hover { background: rgba(255,255,255,0.25); }
 .paid-row { opacity: 0.7; background-color: rgba(16, 185, 129, 0.05); }
 .paid-row td:first-child { border-left: 4px solid var(--secondary); }
+.partial-row { background-color: rgba(245, 158, 11, 0.05); }
+.partial-row td:first-child { border-left: 4px solid #f59e0b; }
+.modern-table tbody tr:hover { background-color: rgba(255, 255, 255, 0.03); }
 .btn-icon-only { border: none; border-radius: 6px; padding: 8px; width: 34px; height: 34px; display: flex; align-items: center; justify-content: center; cursor: pointer; }
 .btn-edit { color: var(--primary); background-color: rgba(59, 130, 246, 0.15); }
 .btn-delete { color: var(--danger); background-color: rgba(239, 68, 68, 0.15); }
@@ -445,6 +448,8 @@ select optgroup {
     transition: background 0.15s, border-color 0.15s;
 }
 .action-modal-btn:hover { background: rgba(255,255,255,0.09); border-color: rgba(255,255,255,0.14); }
+.action-modal-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+.action-modal-btn:disabled:hover { background: rgba(255,255,255,0.04); border-color: rgba(255,255,255,0.07); }
 .action-modal-btn--danger { color: #ef4444; }
 .action-modal-btn--danger:hover { background: rgba(239,68,68,0.08); border-color: rgba(239,68,68,0.2); }
 
@@ -644,6 +649,14 @@ select optgroup {
 .historial-mes-barra { width: 100%; max-width: 28px; border-radius: 4px 4px 0 0; background: var(--secondary); min-height: 2px; }
 .historial-mes-barra.negativo { background: var(--danger); }
 .historial-mes-label { font-size: 0.65rem; color: var(--text-muted); white-space: nowrap; }
+
+/* --- DETALLE DE GASTO --- */
+.detalle-gasto-info { display: flex; flex-direction: column; gap: 10px; }
+.detalle-row { display: flex; justify-content: space-between; align-items: baseline; font-size: 0.9rem; gap: 15px; }
+.detalle-row span { color: var(--text-muted); }
+.detalle-row strong { color: var(--text-main); text-align: right; }
+.detalle-gasto-pagos { display: flex; flex-direction: column; gap: 6px; max-height: 160px; overflow-y: auto; }
+.detalle-pago-row { display: flex; justify-content: space-between; font-size: 0.85rem; padding: 8px 10px; background: rgba(16, 185, 129, 0.08); border-radius: 8px; color: var(--text-main); }
 
 /* --- PÁGINAS LEGALES (terminos.php / privacidad.php) --- */
 .legal-content h3 { margin-top: 22px; margin-bottom: 8px; font-size: 1.05rem; color: var(--text-main); }

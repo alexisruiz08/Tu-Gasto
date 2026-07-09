@@ -480,6 +480,54 @@
         </div>
     </div>
 
+    <!-- MODAL: Pago Parcial -->
+    <div id="modalPagoParcial" class="modal-overlay">
+        <div class="modal-card">
+            <div class="modal-header">
+                <h3>Registrar Pago</h3>
+                <button onclick="closeModal('modalPagoParcial')" class="close-btn" aria-label="Cerrar"><i data-lucide="x"></i></button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="pagoParcialIndex">
+                <p id="pagoParcialInfo" style="color:#94a3b8; margin-bottom:15px;"></p>
+                <div class="form-group">
+                    <label>Monto a pagar (<span class="lblMonedaBase">ARS</span>)</label>
+                    <input type="number" id="montoPagoParcial" placeholder="0.00" step="any">
+                </div>
+                <button onclick="confirmarPagoParcial()" class="btn-primary full-width">Registrar Pago</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL: Detalle de Gasto -->
+    <div id="modalDetalleGasto" class="modal-overlay">
+        <div class="modal-card">
+            <div class="modal-header">
+                <h3 id="detalleGastoTitulo">Detalle del Gasto</h3>
+                <button onclick="closeModal('modalDetalleGasto')" class="close-btn" aria-label="Cerrar"><i data-lucide="x"></i></button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="detalleGastoIndex">
+                <div id="detalleGastoInfo" class="detalle-gasto-info"></div>
+
+                <hr style="border:0; border-top:1px solid var(--glass-border); margin:18px 0;">
+
+                <div class="form-group" style="margin-bottom:10px;">
+                    <label>Pagos registrados</label>
+                    <div id="detalleGastoPagos" class="detalle-gasto-pagos"></div>
+                </div>
+
+                <div id="detalleGastoRegistrarPago" class="form-group" style="margin-bottom:0;">
+                    <label>Registrar nuevo pago</label>
+                    <div style="display:flex; gap:8px;">
+                        <input type="number" id="montoNuevoPagoDetalle" placeholder="0.00" step="any" style="margin:0;">
+                        <button onclick="confirmarPagoDesdeDetalle()" class="btn-primary" style="white-space:nowrap; padding:0 18px;">Pagar</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- MODAL: Configuración -->
     <div id="modalConfig" class="modal-overlay">
         <div class="modal-card">

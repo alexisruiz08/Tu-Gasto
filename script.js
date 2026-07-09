@@ -651,7 +651,19 @@ async function forkRecurrence(gastoOriginal, nuevoGasto) {
             const gastosMes = allData[key].gastos;
             const indexToEdit = gastosMes.findIndex(g => g.idRecurrencia === idRecurrencia);
             if (indexToEdit !== -1) {
-                gastosMes[indexToEdit] = { ...nuevoGasto, fecha: `${y}-${String(m).padStart(2, '0')}-01` };
+                // Si es el mes actual, conservamos los pagos ya registrados (editar la
+                // descripción/categoría no debería borrar plata que ya se pagó). Los
+                // meses futuros arrancan sin pagos, todavía no pasaron.
+                const esMesActual = key === currentMonthKey;
+                const pagosPrevios = esMesActual ? (gastosMes[indexToEdit].pagos || []) : [];
+                const isPaidPrevio = esMesActual ? (gastosMes[indexToEdit].isPaid || false) : false;
+
+                gastosMes[indexToEdit] = {
+                    ...nuevoGasto,
+                    fecha: `${y}-${String(m).padStart(2, '0')}-01`,
+                    pagos: pagosPrevios,
+                    isPaid: isPaidPrevio
+                };
             }
         }
     }
@@ -973,16 +985,29 @@ function renderTable() {
         const isRecurrenteItem = g.esRecurrente || g.idRecurrencia;
         const recurrenteIcon = isRecurrenteItem ? `<i data-lucide="repeat" style="width:14px; margin-left:5px; color:var(--primary);"></i>` : '';
 
-        tr.className = g.isPaid ? 'paid-row' : '';
+        const montoPagado = getMontoPagado(g);
+        const saldo = getSaldoPendiente(g);
+        const esParcial = !g.isPaid && montoPagado > 0.01;
+        const parcialIcon = esParcial ? `<i data-lucide="circle-dollar-sign" style="width:14px; margin-left:5px; color:#f59e0b;"></i>` : '';
+
+        tr.className = g.isPaid ? 'paid-row' : (esParcial ? 'partial-row' : '');
+        tr.style.cursor = 'pointer';
+        tr.onclick = () => openGastoDetalle(g.originalIndex);
+
+        const montoColor = g.isPaid ? 'var(--secondary)' : (esParcial ? '#f59e0b' : 'var(--text-main)');
+        const montoHtml = esParcial
+            ? `${formatCurrency(saldo)} <small style="font-weight:400; color:var(--text-muted);">de ${formatCurrency(g.monto || 0)}</small>`
+            : formatCurrency(g.monto || 0);
+
         // Escapado para uso dentro del atributo onclick (comillas simples del handler inline)
         const descEscapadaAttr = (g.descripcion || '').replace(/\\/g, '\\\\').replace(/'/g, "\\'");
         tr.innerHTML = `
             <td>${formatDate(g.fecha)}</td>
-            <td><div style="font-weight:600;">${escapeHtml(g.descripcion)} ${recurrenteIcon}</div></td>
+            <td><div style="font-weight:600;">${escapeHtml(g.descripcion)} ${recurrenteIcon}${parcialIcon}</div></td>
             <td><span style="font-size:0.9rem;">${escapeHtml(g.categoria)}</span></td>
-            <td style="font-weight:bold; color: ${g.isPaid ? 'var(--secondary)' : 'var(--text-main)'};">${formatCurrency(g.monto || 0)}</td>
+            <td style="font-weight:bold; color: ${montoColor};">${montoHtml}</td>
             <td style="text-align:right;">
-                <button class="btn-action-edit" onclick="openActionModal(${g.originalIndex}, '${descEscapadaAttr}', ${g.isPaid ? 'true' : 'false'})" title="Acciones" aria-label="Acciones para ${escapeHtml(g.descripcion)}">
+                <button class="btn-action-edit" onclick="event.stopPropagation(); openActionModal(${g.originalIndex}, '${descEscapadaAttr}', ${g.isPaid ? 'true' : 'false'})" title="Acciones" aria-label="Acciones para ${escapeHtml(g.descripcion)}">
                     <i data-lucide="pencil-line"></i>
                 </button>
             </td>
@@ -991,6 +1016,52 @@ function renderTable() {
     });
 
     if (typeof lucide !== 'undefined') lucide.createIcons();
+}
+
+// --- PAGOS PARCIALES ---
+// Suma de todos los pagos parciales registrados para un gasto
+function getMontoPagado(g) {
+    return (g.pagos || []).reduce((sum, p) => sum + (parseFloat(p.monto) || 0), 0);
+}
+
+// Si el gasto ya está marcado como pagado, no hay saldo (compatibilidad con
+// gastos viejos que no tienen array de pagos pero sí isPaid=true)
+function getSaldoPendiente(g) {
+    if (g.isPaid) return 0;
+    return Math.max(0, (parseFloat(g.monto) || 0) - getMontoPagado(g));
+}
+
+// Monto efectivamente pagado, para sumar en el dashboard: si isPaid=true pero
+// no hay array de pagos (gastos viejos), se toma el monto completo como pagado.
+function getMontoPagadoEfectivo(g) {
+    if (g.isPaid) return parseFloat(g.monto) || 0;
+    return getMontoPagado(g);
+}
+
+// Registra un pago parcial (o el pago final) sobre un gasto. Devuelve true si
+// se aplicó correctamente. No guarda en el servidor ni notifica: eso lo hace
+// quien llama, para poder encadenar (ej: refrescar el modal de detalle).
+function registrarPago(index, monto) {
+    const gasto = currentData.gastos[index];
+    if (!gasto) return false;
+
+    monto = parseFloat(monto);
+    if (isNaN(monto) || monto <= 0) {
+        showNotification("Ingresa un monto válido", "error");
+        return false;
+    }
+
+    const saldo = getSaldoPendiente(gasto);
+    if (monto > saldo + 0.01) {
+        showNotification(`El monto no puede superar el saldo pendiente (${formatCurrency(saldo)})`, "error");
+        return false;
+    }
+
+    if (!gasto.pagos) gasto.pagos = [];
+    gasto.pagos.push({ monto, fecha: new Date().toISOString().split('T')[0] });
+    gasto.isPaid = getSaldoPendiente(gasto) <= 0.01;
+
+    return true;
 }
 
 // Modal central de acciones (reemplaza al dropdown)
@@ -1003,26 +1074,37 @@ function openActionModal(index, descripcion, isPaid) {
     overlay.className = 'action-modal-overlay';
     overlay.onclick = (e) => { if (e.target === overlay) closeActionModal(); };
 
+    const gasto = currentData.gastos[index];
     const paid = isPaid === true || isPaid === 'true';
     const payLabel = paid ? 'Desmarcar pagado' : 'Marcar como pagado';
     const payIcon  = paid ? 'circle-x' : 'circle-check';
     const payColor = paid ? '#94a3b8' : '#10b981';
 
+    // "Pago Parcial" no tiene sentido si ya está pagado o si no hay saldo pendiente
+    const saldo = gasto ? getSaldoPendiente(gasto) : 0;
+    const pagoParcialDeshabilitado = paid || saldo <= 0.01;
+
     overlay.innerHTML = `
         <div class="action-modal-card">
             <div class="action-modal-title">${escapeHtml(descripcion)}</div>
             <div class="action-modal-buttons">
-                <button class="action-modal-btn" onclick="editGasto(${index}); closeActionModal();">
-                    <span class="action-modal-icon" style="background:rgba(59,130,246,0.15); color:#60a5fa;">
-                        <i data-lucide="pencil"></i>
-                    </span>
-                    <span>Editar</span>
-                </button>
                 <button class="action-modal-btn" onclick="toggleGastoPaidStatus(${index});">
                     <span class="action-modal-icon" style="background:rgba(16,185,129,0.15); color:${payColor};">
                         <i data-lucide="${payIcon}"></i>
                     </span>
                     <span>${payLabel}</span>
+                </button>
+                <button class="action-modal-btn" ${pagoParcialDeshabilitado ? 'disabled' : ''} onclick="closeActionModal(); openPagoParcialModal(${index});">
+                    <span class="action-modal-icon" style="background:rgba(245,158,11,0.15); color:#f59e0b;">
+                        <i data-lucide="circle-dollar-sign"></i>
+                    </span>
+                    <span>Pago Parcial</span>
+                </button>
+                <button class="action-modal-btn" onclick="editGasto(${index}); closeActionModal();">
+                    <span class="action-modal-icon" style="background:rgba(59,130,246,0.15); color:#60a5fa;">
+                        <i data-lucide="pencil"></i>
+                    </span>
+                    <span>Editar</span>
                 </button>
                 <button class="action-modal-btn action-modal-btn--danger" onclick="deleteGasto(${index}); closeActionModal();">
                     <span class="action-modal-icon" style="background:rgba(239,68,68,0.15); color:#ef4444;">
@@ -1091,9 +1173,10 @@ async function handleSaveGasto() {
 
     const nuevoGasto = {
         descripcion: desc, monto: monto, categoria: cat || 'Varios',
-        fecha: fechaInput, esRecurrente: esRecurrente, 
+        fecha: fechaInput, esRecurrente: esRecurrente,
         idRecurrencia: esRecurrente ? (currentData.gastos[editIdx]?.idRecurrencia || Date.now()) : null,
-        isPaid: false, recurrenceDuration: esRecurrente ? mesesRecurrentes : 0 
+        isPaid: false, recurrenceDuration: esRecurrente ? mesesRecurrentes : 0,
+        pagos: []
     };
 
     if (editIdx !== "") {
@@ -1103,8 +1186,12 @@ async function handleSaveGasto() {
              closeModal('modalGasto');
              btn.disabled = false;
              btn.textContent = 'Guardar';
-             return; 
+             return;
         } else {
+            // Edición simple (no recurrente): conservamos el historial de pagos ya
+            // registrado, editar la descripción/categoría no debería borrar plata pagada
+            nuevoGasto.pagos = gastoOriginal.pagos || [];
+            nuevoGasto.isPaid = getMontoPagado(nuevoGasto) >= nuevoGasto.monto - 0.01;
             currentData.gastos[editIdx] = nuevoGasto;
         }
     } else {
@@ -1142,6 +1229,7 @@ function deleteGasto(index) {
         gasto.isDeleted = true;
         gasto.monto = 0;
         gasto.isPaid = false;
+        gasto.pagos = [];
     } else {
         currentData.gastos.splice(index, 1);
     }
@@ -1171,10 +1259,106 @@ function undoDeleteGasto() {
 function toggleGastoPaidStatus(index) {
     const gasto = currentData.gastos[index];
     if (!gasto) return;
-    gasto.isPaid = !gasto.isPaid;
     closeActionModal();
-    saveData();
-    showNotification(gasto.isPaid ? "Marcado como pagado" : "Marcado como pendiente");
+
+    if (gasto.isPaid) {
+        // Desmarcar: vuelve a quedar pendiente por el total, se borra el historial de pagos parciales
+        gasto.pagos = [];
+        gasto.isPaid = false;
+        saveData();
+        showNotification("Marcado como pendiente");
+    } else {
+        // Marcar como pagado = saldar de una todo lo que falta
+        const saldo = getSaldoPendiente(gasto);
+        if (registrarPago(index, saldo)) {
+            saveData();
+            showNotification("Marcado como pagado");
+        }
+    }
+}
+
+// --- MODAL: Pago Parcial ---
+function openPagoParcialModal(index) {
+    const gasto = currentData.gastos[index];
+    if (!gasto) return;
+
+    const saldo = getSaldoPendiente(gasto);
+    document.getElementById('pagoParcialIndex').value = index;
+    document.getElementById('pagoParcialInfo').textContent =
+        `Saldo pendiente: ${formatCurrency(saldo)} de ${formatCurrency(gasto.monto || 0)}`;
+    document.getElementById('montoPagoParcial').value = '';
+    document.getElementById('montoPagoParcial').max = saldo;
+
+    openModal('modalPagoParcial');
+}
+
+function confirmarPagoParcial() {
+    const index = document.getElementById('pagoParcialIndex').value;
+    const monto = parseFloat(document.getElementById('montoPagoParcial').value);
+
+    if (registrarPago(index, monto)) {
+        saveData();
+        closeModal('modalPagoParcial');
+        showNotification("Pago registrado");
+    }
+}
+
+// --- MODAL: Detalle de Gasto ---
+function openGastoDetalle(index) {
+    const g = currentData.gastos[index];
+    if (!g) return;
+
+    document.getElementById('detalleGastoIndex').value = index;
+    document.getElementById('detalleGastoTitulo').textContent = g.descripcion || 'Detalle del Gasto';
+
+    const saldo = getSaldoPendiente(g);
+    const montoPagado = getMontoPagado(g);
+    let estado = 'Pendiente';
+    let estadoColor = 'var(--danger)';
+    if (g.isPaid) {
+        estado = 'Pagado';
+        estadoColor = 'var(--secondary)';
+    } else if (montoPagado > 0.01) {
+        estado = 'Parcialmente pagado';
+        estadoColor = '#f59e0b';
+    }
+
+    document.getElementById('detalleGastoInfo').innerHTML = `
+        <div class="detalle-row"><span>Descripción</span><strong>${escapeHtml(g.descripcion)}</strong></div>
+        <div class="detalle-row"><span>Categoría</span><strong>${escapeHtml(g.categoria || 'Varios')}</strong></div>
+        <div class="detalle-row"><span>Fecha</span><strong>${formatDate(g.fecha)}</strong></div>
+        <div class="detalle-row"><span>Monto total</span><strong>${formatCurrency(g.monto || 0)}</strong></div>
+        <div class="detalle-row"><span>Estado</span><strong style="color:${estadoColor};">${estado}</strong></div>
+        ${saldo > 0.01 ? `<div class="detalle-row"><span>Saldo pendiente</span><strong style="color:var(--danger);">${formatCurrency(saldo)}</strong></div>` : ''}
+        ${(g.esRecurrente || g.idRecurrencia) ? `<div class="detalle-row"><span>Recurrente</span><strong>Sí</strong></div>` : ''}
+    `;
+
+    const pagos = g.pagos || [];
+    const pagosCont = document.getElementById('detalleGastoPagos');
+    pagosCont.innerHTML = pagos.length === 0
+        ? '<small style="color:#94a3b8;">Todavía no se registró ningún pago.</small>'
+        : pagos.map(p => `
+            <div class="detalle-pago-row">
+                <span>${formatDate(p.fecha)}</span>
+                <span>${formatCurrency(p.monto)}</span>
+            </div>
+        `).join('');
+
+    document.getElementById('montoNuevoPagoDetalle').value = '';
+    document.getElementById('detalleGastoRegistrarPago').style.display = saldo > 0.01 ? 'block' : 'none';
+
+    openModal('modalDetalleGasto');
+}
+
+function confirmarPagoDesdeDetalle() {
+    const index = document.getElementById('detalleGastoIndex').value;
+    const monto = parseFloat(document.getElementById('montoNuevoPagoDetalle').value);
+
+    if (registrarPago(index, monto)) {
+        saveData();
+        showNotification("Pago registrado");
+        openGastoDetalle(index); // refresca la vista del modal con el pago recién agregado
+    }
 }
 
 function handleSaveIngresos() {
@@ -1329,8 +1513,10 @@ function showNotification(message, type = 'success', extraHtml = '') {
 
 function updateDashboard() {
     const ingresosTotal = parseFloat(currentData.ingresos.fijo) + parseFloat(currentData.ingresos.extra);
-    const gastosPagados = currentData.gastos.reduce((sum, g) => sum + (g.isPaid && !g.isDeleted ? g.monto : 0), 0);
-    const gastosPendientes = currentData.gastos.reduce((sum, g) => sum + (!g.isPaid && !g.isDeleted ? g.monto : 0), 0);
+    // Usamos lo efectivamente pagado (incluye pagos parciales) en vez de todo-o-nada,
+    // así "Pendientes" refleja el saldo real que falta pagar de cada gasto.
+    const gastosPagados = currentData.gastos.reduce((sum, g) => sum + (!g.isDeleted ? getMontoPagadoEfectivo(g) : 0), 0);
+    const gastosPendientes = currentData.gastos.reduce((sum, g) => sum + (!g.isDeleted ? getSaldoPendiente(g) : 0), 0);
     const disponible = ingresosTotal - gastosPagados - gastosPendientes;
 
     document.getElementById('displayIngresos').textContent = `+${formatCurrency(ingresosTotal)}`;
@@ -1366,14 +1552,21 @@ function exportGastosCSV() {
     }
 
     const escapeCsv = (val) => `"${String(val ?? '').replace(/"/g, '""')}"`;
-    const header = ['Fecha', 'Descripción', 'Categoría', `Monto (${currentData.monedaBase.toUpperCase()})`, 'Pagado'];
-    const filas = gastos.map(g => [
-        g.fecha || '',
-        g.descripcion || '',
-        g.categoria || 'Varios',
-        g.monto || 0,
-        g.isPaid ? 'Sí' : 'No'
-    ]);
+    const header = ['Fecha', 'Descripción', 'Categoría', `Monto (${currentData.monedaBase.toUpperCase()})`, 'Estado', 'Monto Pagado', 'Saldo Pendiente'];
+    const filas = gastos.map(g => {
+        const montoPagado = getMontoPagadoEfectivo(g);
+        const saldo = getSaldoPendiente(g);
+        const estado = g.isPaid ? 'Pagado' : (montoPagado > 0.01 ? 'Parcial' : 'Pendiente');
+        return [
+            g.fecha || '',
+            g.descripcion || '',
+            g.categoria || 'Varios',
+            g.monto || 0,
+            estado,
+            montoPagado,
+            saldo
+        ];
+    });
 
     const csv = [header, ...filas].map(fila => fila.map(escapeCsv).join(',')).join('\r\n');
     const blob = new Blob(['﻿' + csv], { type: 'text/csv;charset=utf-8;' });
