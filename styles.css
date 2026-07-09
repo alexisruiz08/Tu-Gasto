@@ -603,6 +603,9 @@ select optgroup {
 
 @media (max-width: 500px) {
     .donate-container { margin-bottom: 12px; }
+    .app-header { margin-bottom: 12px; }
+    .dashboard-grid { margin-bottom: 12px; }
+    .controls-bar { margin-bottom: 12px; }
 
     /* Borde fijo de 10px en todos lados */
     body {
