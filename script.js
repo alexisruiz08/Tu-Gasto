@@ -135,10 +135,8 @@ document.addEventListener('visibilitychange', () => {
     if (document.hidden) {
         if (window.stopParticles) window.stopParticles();
     } else {
-        // Solo reanudar si estamos en la landing (no en la app)
-        if (document.getElementById('landingLayout').style.display !== 'none') {
-            if (window.startParticles) window.startParticles();
-        }
+        // Las partículas se ven tanto en la landing como dentro de la app
+        if (window.startParticles) window.startParticles();
     }
 });
 
@@ -219,7 +217,7 @@ async function checkSession() {
             currentUser = data.username;
             document.getElementById('landingLayout').style.display = 'none';
             document.getElementById('mainContent').style.display = 'block';
-            if(window.stopParticles) window.stopParticles();
+            if(window.startParticles) window.startParticles();
             initApp();
         } else {
             document.getElementById('landingLayout').style.display = 'flex';
@@ -246,7 +244,7 @@ async function checkSession() {
 
             document.getElementById('landingLayout').style.display = 'none';
             document.getElementById('mainContent').style.display = 'block';
-            if(window.stopParticles) window.stopParticles();
+            if(window.startParticles) window.startParticles();
             initApp();
         } else {
             document.getElementById('landingLayout').style.display = 'flex';
