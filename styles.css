@@ -119,7 +119,7 @@ select optgroup {
 .controls-bar { padding: 15px; margin-bottom: 20px; display: flex; gap: 15px; align-items: center; }
 
 /* DASHBOARD GRID */
-.dashboard-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; margin-bottom: 20px; }
+.dashboard-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 12px; margin-bottom: 20px; }
 .card { padding: 25px; display: flex; flex-direction: column; justify-content: space-between; min-height: 160px; }
 .card-header { display: flex; justify-content: space-between; color: var(--text-muted); font-size: 0.9rem; margin-bottom: 10px; }
 .card-value { font-size: 2.5rem; font-weight: 700; margin-bottom: 5px; }
