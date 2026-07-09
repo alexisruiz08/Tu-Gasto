@@ -140,6 +140,7 @@ select optgroup {
 .transactions-container { padding: 25px; }
 .section-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 10px; }
 .section-header-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+.btn-gasto-text-short { display: none; }
 .filter-bar { display: flex; gap: 10px; margin-bottom: 15px; flex-wrap: wrap; }
 .filter-bar input { flex: 2; min-width: 200px; margin-bottom: 0; }
 .filter-bar select { flex: 1; min-width: 160px; margin-bottom: 0; }
@@ -373,10 +374,10 @@ select optgroup {
     transition: background 0.15s;
 }
 .btn-undo:hover { background: rgba(255,255,255,0.25); }
-.paid-row { opacity: 0.7; background-color: rgba(16, 185, 129, 0.05); }
-.paid-row td:first-child { border-left: 4px solid var(--secondary); }
-.partial-row { background-color: rgba(245, 158, 11, 0.05); }
-.partial-row td:first-child { border-left: 4px solid #f59e0b; }
+/* Degradé en vez de un color plano + borde recto: se nota más natural, sin
+   una línea marcada de "acá termina el verde" */
+.paid-row { opacity: 0.7; background: linear-gradient(to right, rgba(16, 185, 129, 0.22), rgba(16, 185, 129, 0.04) 55%, transparent 100%); }
+.partial-row { background: linear-gradient(to right, rgba(245, 158, 11, 0.22), rgba(245, 158, 11, 0.04) 55%, transparent 100%); }
 .modern-table tbody tr:hover { background-color: rgba(255, 255, 255, 0.03); }
 .btn-icon-only { border: none; border-radius: 6px; padding: 8px; width: 34px; height: 34px; display: flex; align-items: center; justify-content: center; cursor: pointer; }
 .btn-edit { color: var(--primary); background-color: rgba(59, 130, 246, 0.15); }
@@ -588,6 +589,11 @@ select optgroup {
        el salto de línea) en vez de apretarse los tres en la misma fila */
     .logout-btn { order: 2; }
     .header-donate { order: 3; flex-basis: 100%; }
+
+    /* "Nuevo Gasto" -> "Nuevo" para que entre junto a Reportes y Exportar sin saltar de línea */
+    .btn-gasto-text-full { display: none; }
+    .btn-gasto-text-short { display: inline; }
+
     .modern-table th:nth-child(1), .modern-table th:nth-child(3) { display: none; }
     .modern-table td:nth-child(1), .modern-table td:nth-child(3) { display: none; }
     .modern-table th, .modern-table td { font-size: 0.9rem; padding: 10px; }

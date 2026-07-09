@@ -319,7 +319,9 @@
                         <i data-lucide="download"></i> Exportar
                     </button>
                     <button onclick="openModal('modalGasto')" class="btn-primary btn-icon">
-                        <i data-lucide="plus"></i> Nuevo Gasto
+                        <i data-lucide="plus"></i>
+                        <span class="btn-gasto-text-full">Nuevo Gasto</span>
+                        <span class="btn-gasto-text-short">Nuevo</span>
                     </button>
                 </div>
             </div>
