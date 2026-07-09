@@ -247,7 +247,12 @@
         </header>
 
         <div class="donate-container">
-            <script type='text/javascript' src='https://storage.ko-fi.com/cdn/widget/Widget_2.js'></script><script type='text/javascript'>kofiwidget2.init('Invítame un café', '#1a2640', 'O2F322PEJJ');kofiwidget2.draw();</script>
+            <div class="donate-inner">
+                <script type='text/javascript' src='https://storage.ko-fi.com/cdn/widget/Widget_2.js'></script><script type='text/javascript'>kofiwidget2.init('Invítame un café', '#1a2640', 'O2F322PEJJ');kofiwidget2.draw();</script>
+                <button class="feedback-btn" onclick="openModal('modalFeedback')" title="Sugerir una mejora" aria-label="Sugerir una mejora">
+                    <i data-lucide="lightbulb"></i>
+                </button>
+            </div>
         </div>
 
         <div class="controls-bar glass-panel">
@@ -672,8 +677,26 @@
         </div>
     </div>
 
+    <!-- MODAL: Sugerencias / Consejos de mejora -->
+    <div id="modalFeedback" class="modal-overlay">
+        <div class="modal-card">
+            <div class="modal-header">
+                <h3>Sugerí una mejora</h3>
+                <button onclick="closeModal('modalFeedback')" class="close-btn" aria-label="Cerrar"><i data-lucide="x"></i></button>
+            </div>
+            <div class="modal-body">
+                <p style="color:#94a3b8; margin-bottom:15px;">¿Qué te gustaría que TuGasto.com tenga o mejore? Leemos todos los mensajes.</p>
+                <div class="form-group">
+                    <textarea id="feedbackMensaje" rows="5" maxlength="2000" placeholder="Contanos tu idea..."></textarea>
+                </div>
+                <button id="btnEnviarFeedback" onclick="enviarFeedback()" class="btn-primary full-width">Enviar sugerencia</button>
+            </div>
+        </div>
+    </div>
+
     <footer class="app-footer">
         <a href="/terminos.php">Términos de Servicio</a> · <a href="/privacidad.php">Política de Privacidad</a>
+        <div class="app-version">v<?php echo htmlspecialchars(trim(file_get_contents(__DIR__ . '/version.txt'))); ?></div>
     </footer>
 
     <div id="notification-container" class="notification-container"></div>

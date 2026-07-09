@@ -1369,6 +1369,39 @@ function handleSaveIngresos() {
     showNotification("Ingresos actualizados");
 }
 
+// --- SUGERENCIAS / CONSEJOS DE MEJORA ---
+async function enviarFeedback() {
+    const mensaje = document.getElementById('feedbackMensaje').value.trim();
+    if (!mensaje) {
+        showNotification("Escribí algo antes de enviar", "error");
+        return;
+    }
+
+    const btn = document.getElementById('btnEnviarFeedback');
+    btn.disabled = true;
+    btn.textContent = 'Enviando...';
+
+    try {
+        const formData = new FormData();
+        formData.append('action', 'submit_feedback');
+        formData.append('mensaje', mensaje);
+        const res = await fetch(API_URL, { method: 'POST', body: formData });
+        const data = await res.json();
+
+        if (data.status === 'success') {
+            closeModal('modalFeedback');
+            showNotification("¡Gracias por tu sugerencia!");
+        } else {
+            showNotification(data.message || "Error al enviar", "error");
+        }
+    } catch (e) {
+        showNotification("Error de conexión", "error");
+    } finally {
+        btn.disabled = false;
+        btn.textContent = 'Enviar sugerencia';
+    }
+}
+
 function applyRollover(action) {
     const amount = parseFloat(document.getElementById('montoRolloverInput').value) || 0;
     if (action === 'caja') currentData.ingresos.extra = (parseFloat(currentData.ingresos.extra) || 0) + amount;
@@ -1404,6 +1437,9 @@ function openModal(id) {
     }
     if (id === 'modalTransfer') {
         setTransferType('deposito');
+    }
+    if (id === 'modalFeedback') {
+        document.getElementById('feedbackMensaje').value = '';
     }
 
     document.getElementById(id).style.display = 'flex';

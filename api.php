@@ -357,6 +357,38 @@ if ($action === 'save_data') {
     exit;
 }
 
+// Recibe sugerencias/consejos de mejora de los usuarios (boton junto al de Ko-fi)
+if ($action === 'submit_feedback') {
+    if (isApiRateLimited($pdo, 'submit_feedback:' . $_SESSION['user_id'])) {
+        http_response_code(429);
+        echo json_encode(['status' => 'error', 'message' => 'Demasiadas solicitudes. Espera un momento.']);
+        exit;
+    }
+
+    $mensaje = trim($_POST['mensaje'] ?? '');
+    if ($mensaje === '') {
+        echo json_encode(['status' => 'error', 'message' => 'Escribí algo antes de enviar']);
+        exit;
+    }
+    if (mb_strlen($mensaje) > 2000) {
+        echo json_encode(['status' => 'error', 'message' => 'El mensaje es demasiado largo']);
+        exit;
+    }
+
+    $pdo->exec("CREATE TABLE IF NOT EXISTS feedback (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        user_id INT NOT NULL,
+        username VARCHAR(191) NOT NULL,
+        mensaje TEXT NOT NULL,
+        fecha DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+    ) ENGINE=InnoDB");
+
+    $stmt = $pdo->prepare("INSERT INTO feedback (user_id, username, mensaje) VALUES (?, ?, ?)");
+    $stmt->execute([$_SESSION['user_id'], $_SESSION['username'], $mensaje]);
+    echo json_encode(['status' => 'success']);
+    exit;
+}
+
 // Manejo de acción no válida
 http_response_code(400);
 echo json_encode(['status' => 'error', 'message' => 'Acción no válida.']);
