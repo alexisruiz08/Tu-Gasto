@@ -241,13 +241,14 @@
                 <img src="tugasto.png" alt="TuGasto.com" width="25" height="25">
                 <span id="welcomeText">Hola, Usuario</span>
             </div>
-            <div class="header-donate">
-                <script type='text/javascript' src='https://storage.ko-fi.com/cdn/widget/Widget_2.js'></script><script type='text/javascript'>kofiwidget2.init('Invítame un café', '#1a2640', 'O2F322PEJJ');kofiwidget2.draw();</script>
-            </div>
             <button class="btn-text logout-btn" onclick="logout()">
                 <i data-lucide="log-out"></i> Salir
             </button>
         </header>
+
+        <div style="display:flex; justify-content:center; margin-bottom:20px;">
+            <script type='text/javascript' src='https://storage.ko-fi.com/cdn/widget/Widget_2.js'></script><script type='text/javascript'>kofiwidget2.init('Invítame un café', '#1a2640', 'O2F322PEJJ');kofiwidget2.draw();</script>
+        </div>
 
         <div class="controls-bar glass-panel">
             <div id="dateSelectorControl" class="date-selector-control">
@@ -318,10 +319,8 @@
                     <button onclick="exportGastosCSV()" class="btn-secondary btn-icon btn-sm" title="Exportar a CSV">
                         <i data-lucide="download"></i> Exportar
                     </button>
-                    <button onclick="openModal('modalGasto')" class="btn-primary btn-icon">
-                        <i data-lucide="plus"></i>
-                        <span class="btn-gasto-text-full">Nuevo Gasto</span>
-                        <span class="btn-gasto-text-short">Nuevo</span>
+                    <button onclick="openModal('modalGasto')" class="btn-primary btn-icon btn-nuevo-gasto">
+                        <i data-lucide="plus"></i> Nuevo Gasto
                     </button>
                 </div>
             </div>

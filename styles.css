@@ -113,12 +113,8 @@ select optgroup {
 /* --- LAYOUT --- */
 /* Todos los paneles ocupan el 100% de mainContent (que ya tiene max-width) */
 .app-header, .controls-bar, .dashboard-grid, .transactions-container { width: 100%; }
-.app-header { padding: 15px 25px; margin-bottom: 20px; display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; row-gap: 10px; }
-.header-left { display: flex; align-items: center; gap: 12px; font-weight: 600; order: 1; }
-/* En pantallas anchas queda centrado entre el nombre y "Salir"; en angostas
-   (ver media query) pasa a su propia fila para no apretar el header */
-.header-donate { order: 2; display: flex; justify-content: center; flex: 1; }
-.logout-btn { order: 3; }
+.app-header { padding: 15px 25px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; }
+.header-left { display: flex; align-items: center; gap: 12px; font-weight: 600; }
 .controls-bar { padding: 15px; margin-bottom: 20px; display: flex; gap: 15px; align-items: center; }
 
 /* DASHBOARD GRID */
@@ -140,7 +136,6 @@ select optgroup {
 .transactions-container { padding: 25px; }
 .section-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 10px; }
 .section-header-actions { display: flex; gap: 8px; flex-wrap: wrap; }
-.btn-gasto-text-short { display: none; }
 .filter-bar { display: flex; gap: 10px; margin-bottom: 15px; flex-wrap: wrap; }
 .filter-bar input { flex: 2; min-width: 200px; margin-bottom: 0; }
 .filter-bar select { flex: 1; min-width: 160px; margin-bottom: 0; }
@@ -374,10 +369,13 @@ select optgroup {
     transition: background 0.15s;
 }
 .btn-undo:hover { background: rgba(255,255,255,0.25); }
-/* Degradé en vez de un color plano + borde recto: se nota más natural, sin
-   una línea marcada de "acá termina el verde" */
+/* Barrita de color al inicio de la fila + degradé hacia la derecha, para que
+   el color no corte de golpe (sin la barrita se pierde el efecto que marcaba
+   de un vistazo qué fila está pagada) */
 .paid-row { opacity: 0.7; background: linear-gradient(to right, rgba(16, 185, 129, 0.22), rgba(16, 185, 129, 0.04) 55%, transparent 100%); }
+.paid-row td:first-child { border-left: 4px solid var(--secondary); }
 .partial-row { background: linear-gradient(to right, rgba(245, 158, 11, 0.22), rgba(245, 158, 11, 0.04) 55%, transparent 100%); }
+.partial-row td:first-child { border-left: 4px solid #f59e0b; }
 .modern-table tbody tr:hover { background-color: rgba(255, 255, 255, 0.03); }
 .btn-icon-only { border: none; border-radius: 6px; padding: 8px; width: 34px; height: 34px; display: flex; align-items: center; justify-content: center; cursor: pointer; }
 .btn-edit { color: var(--primary); background-color: rgba(59, 130, 246, 0.15); }
@@ -584,15 +582,9 @@ select optgroup {
     .dashboard-grid { grid-template-columns: 1fr; }
     .controls-bar { flex-direction: column; gap: 10px; }
 
-    /* Header angosto: nombre + Salir se quedan arriba juntos, el botón de
-       donación pasa a su propia fila centrada debajo (flex-basis:100% fuerza
-       el salto de línea) en vez de apretarse los tres en la misma fila */
-    .logout-btn { order: 2; }
-    .header-donate { order: 3; flex-basis: 100%; }
-
-    /* "Nuevo Gasto" -> "Nuevo" para que entre junto a Reportes y Exportar sin saltar de línea */
-    .btn-gasto-text-full { display: none; }
-    .btn-gasto-text-short { display: inline; }
+    /* "Nuevo Gasto" crece para ocupar todo el ancho apenas no entra junto a
+       Reportes/Exportar en la misma fila, en vez de quedar chico a la izquierda */
+    .btn-nuevo-gasto { flex: 1 1 auto; }
 
     .modern-table th:nth-child(1), .modern-table th:nth-child(3) { display: none; }
     .modern-table td:nth-child(1), .modern-table td:nth-child(3) { display: none; }
