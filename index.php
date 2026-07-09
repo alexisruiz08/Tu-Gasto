@@ -319,8 +319,8 @@
                     <button onclick="exportGastosCSV()" class="btn-secondary btn-icon btn-sm" title="Exportar a CSV">
                         <i data-lucide="download"></i> Exportar
                     </button>
-                    <button onclick="openModal('modalGasto')" class="btn-primary btn-icon btn-nuevo-gasto">
-                        <i data-lucide="plus"></i> Nuevo Gasto
+                    <button onclick="openModal('modalGasto')" class="btn-primary btn-icon btn-nuevo-gasto" title="Nuevo Gasto">
+                        <i data-lucide="plus"></i><span>Nuevo Gasto</span>
                     </button>
                 </div>
             </div>

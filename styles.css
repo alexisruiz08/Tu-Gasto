@@ -135,7 +135,13 @@ select optgroup {
 /* --- TABLA --- */
 .transactions-container { padding: 25px; }
 .section-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 10px; }
-.section-header-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+.section-header-actions { display: flex; gap: 8px; flex-wrap: nowrap; min-width: 0; }
+.section-header-actions .btn-secondary { flex-shrink: 0; }
+/* Nuevo Gasto siempre queda en la misma fila que Reportes/Exportar: en vez de
+   pasar a una fila propia, se va achicando y si el texto no entra lo corta
+   con puntos suspensivos (el ícono "+" siempre queda entero) */
+.btn-nuevo-gasto { flex: 1 1 60px; min-width: 0; overflow: hidden; }
+.btn-nuevo-gasto span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
 .filter-bar { display: flex; gap: 10px; margin-bottom: 15px; flex-wrap: wrap; }
 .filter-bar input { flex: 2; min-width: 200px; margin-bottom: 0; }
 .filter-bar select { flex: 1; min-width: 160px; margin-bottom: 0; }
@@ -582,13 +588,16 @@ select optgroup {
     .dashboard-grid { grid-template-columns: 1fr; }
     .controls-bar { flex-direction: column; gap: 10px; }
 
-    /* "Nuevo Gasto" crece para ocupar todo el ancho apenas no entra junto a
-       Reportes/Exportar en la misma fila, en vez de quedar chico a la izquierda */
-    .btn-nuevo-gasto { flex: 1 1 auto; }
-
     .modern-table th:nth-child(1), .modern-table th:nth-child(3) { display: none; }
     .modern-table td:nth-child(1), .modern-table td:nth-child(3) { display: none; }
     .modern-table th, .modern-table td { font-size: 0.9rem; padding: 10px; }
+
+    /* La columna Fecha (donde vive la barrita de color) se oculta acá arriba;
+       la pasamos a Descripción, que pasa a ser la primera columna visible */
+    .paid-row td:first-child { border-left: none; }
+    .paid-row td:nth-child(2) { border-left: 4px solid var(--secondary); }
+    .partial-row td:first-child { border-left: none; }
+    .partial-row td:nth-child(2) { border-left: 4px solid #f59e0b; }
 
 }
 
